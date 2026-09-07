@@ -10,7 +10,7 @@ def listen():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    capture = pyshark.LiveCapture(interface='Ethernet', bpf_filter="udp", eventloop=loop, tshark_path=os.getenv('TSHARK_PATH'))
+    capture = pyshark.LiveCapture(interface='Ethernet', bpf_filter="tcp port 20000", eventloop=loop, tshark_path=os.getenv('TSHARK_PATH'))
     capture.apply_on_packets(print)
 
 if __name__ == '__main__':

@@ -1,0 +1,9 @@
+services:
+  outstation:
+    build: ./simulators/outstation
+    platform: linux/amd64
+    container_name: test-outstation
+    restart: no
+    ports:
+      - "20000:20000"
+
