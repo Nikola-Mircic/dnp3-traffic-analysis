@@ -1,13 +1,33 @@
 from pydnp3 import opendnp3, openpal, asiopal, asiodnp3
+from pydnp3.opendnp3 import OperateType, ControlRelayOutputBlock
+
+from command_handler import OutstationCommandHandler
+import logging
+import sys
+
+stdout_stream = logging.StreamHandler(sys.stdout)
+stdout_stream.setFormatter(logging.Formatter('%(asctime)s\t%(name)s\t%(levelname)s\t%(message)s'))
+
+_log = logging.getLogger(__name__)
+_log.addHandler(stdout_stream)
+_log.setLevel(logging.DEBUG)
 
 class OutstationHandler(opendnp3.IOutstationApplication):
-    def __init__(self, channel):
+    def __init__(self, outstation_name, channel, config):
         super().__init__()
+        self._outstation_ptr = None
         self.channel = channel
-        self.oustation_ptr = None
+        self.outstation_name = outstation_name
 
-    def set_oustation_ptr(self, oustation_ptr):
-        self.oustation_ptr = oustation_ptr
+        self.cmd_handler = OutstationCommandHandler(self)
+
+        self._outstation_ptr = self.channel.AddOutstation(
+            self.outstation_name,
+            self.cmd_handler,
+            self,
+            config)
+
+        self._outstation_ptr.Enable()
 
     def shutdown(self):
         self.channel.Shutdown()
@@ -28,7 +48,7 @@ class OutstationHandler(opendnp3.IOutstationApplication):
         application_iin.needTime = False
         # Just for testing purposes, convert it to an IINField and display the contents of the two bytes.
         iin_field = application_iin.ToIIN()
-        print('Outstation IIN flags: IINField LSB={}, MSB={}'.format(iin_field.LSB, iin_field.MSB))
+        _log.debug('Outstation IIN flags: IINField LSB={}, MSB={}'.format(iin_field.LSB, iin_field.MSB))
 
         return application_iin
 
@@ -53,8 +73,7 @@ class OutstationHandler(opendnp3.IOutstationApplication):
         _log.debug('Checking warm restart support...')
         return opendnp3.RestartMode.UNSUPPORTED
 
-    @classmethod
-    def process_point_value(cls, command_type, command, index, op_type):
+    def process_point_value(self, command_type, command, index, op_type):
         """
             A PointValue was received from the Master. Process its payload.
 
@@ -74,8 +93,8 @@ class OutstationHandler(opendnp3.IOutstationApplication):
         :param value: An instance of Analog, Binary, or another opendnp3 data value.
         :param index: (integer) Index of the data definition in the opendnp3 database.
         """
-        print('Recording {} measurement, index={}, value={}'.format(type(value).__name__, index, value.value))
+        _log.debug('Recording {} measurement, index={}, value={}'.format(type(value).__name__, index, value.value))
         builder = asiodnp3.UpdateBuilder()
         builder.Update(value, index)
         update = builder.Build()
-        self.oustation_ptr.Apply(update)
+        self._outstation_ptr.Apply(update)

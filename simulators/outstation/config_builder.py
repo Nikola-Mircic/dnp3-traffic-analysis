@@ -1,21 +1,24 @@
 from dnp3_python.dnp3station import outstation
 from pydnp3 import opendnp3, asiodnp3, openpal
-from pydnp3.opendnp3 import BinaryConfig, AnalogConfig, CounterConfig, FrozenCounterConfig
+from pydnp3.opendnp3 import (BinaryConfig,
+                             AnalogConfig,
+                             CounterConfig,
+                             FrozenCounterConfig,
+                             BOStatusConfig,
+                             AOStatusConfig)
 
 from command_handler import OutstationCommandHandler
 from outstation_handler import OutstationHandler
 
-class OutstationBuilder():
+class OutstationConfigBuilder():
     def __init__(self):
-        self._outstation_ptr = None
-        self.channel = None
-        self.outstation_name = "outstation"
         self.local_addr=2
         self.remote_addr=1
         self.binary_inputs = []
         self.analog_inputs = []
         self.counters = []
         self.frozen_counters = []
+
         self.binary_outputs = []
         self.analog_outputs = []
         self.allow_unsolicited = False
@@ -74,36 +77,13 @@ class OutstationBuilder():
         # Configure point database
         self._configure_database(stack.dbConfig)
 
-        cmd_handler = OutstationCommandHandler(self._outstation_ptr)
-        ouststation_app = OutstationHandler(self.channel)
-
-        self._outstation_ptr = self.channel.AddOutstation(
-            self.outstation_name,
-            cmd_handler,
-            ouststation_app,
-            stack)
-
-        self._outstation_ptr.Enable()
-
-        ouststation_app.set_oustation_ptr(self._outstation_ptr)
-
-        return ouststation_app
-
-    def set_name(self, name):
-        self.outstation_name = name
-        return self
-
-    def set_channel(self, channel):
-        self.channel = channel
-        return self
+        return stack
 
     def set_local_addr(self, local_addr):
         self.local_addr = local_addr
-        return self
 
     def set_remote_addr(self, remote_addr):
         self.remote_addr = remote_addr
-        return self
 
     def add_binary_inputs(self, 
                           binary_input_count,
@@ -122,7 +102,6 @@ class OutstationBuilder():
             config.evariation = evariation
             self.binary_inputs.append(config)
 
-        return self
 
     def add_analog_inputs(self,
                           analog_input_count,
@@ -142,7 +121,6 @@ class OutstationBuilder():
             config.evariation = evariation
             self.analog_inputs.append(config)
 
-        return self
 
     def add_counters(self,
                      counter_count,
@@ -161,7 +139,6 @@ class OutstationBuilder():
             config.evariation = evariation
             self.counters.append(config)
 
-        return self
 
     def add_frozen_counters(self,
                             frozen_counter_count,
@@ -180,7 +157,6 @@ class OutstationBuilder():
             config.evariation = evariation
             self.frozen_counters.append(config)
 
-        return self
 
     def add_binary_outputs(self,
                            binary_output_count,
@@ -193,40 +169,39 @@ class OutstationBuilder():
         and variation 1 ( status with flags ) for object types by default.
         """
         for i in range(binary_output_count):
-            config = BinaryConfig()
-            config.clazz = cls,
+            config = BOStatusConfig()
+            config.clazz = cls
             config.svariation = svariaton
             config.evariation = evariation
             self.binary_outputs.append(config)
 
-        return self
 
-    def set_analog_output_count(self,
-                                analog_output_count,
-                                svariaton = opendnp3.StaticAnalogOutputStatusVariation.Group40Var1,
-                                evariation = opendnp3.EventAnalogOutputStatusVariation.Group42Var1):
+    def add_analog_outputs(self,
+                            analog_output_count,
+                            cls,
+                            svariaton = opendnp3.StaticAnalogOutputStatusVariation.Group40Var1,
+                            evariation = opendnp3.EventAnalogOutputStatusVariation.Group42Var1):
         """Adds analog_output_count input point of class cls to outstation database.
 
         Uses group 40 and variation 1 ( output status with flags ) and group 42
         and variation 1 ( output status with flags ) for object types by default."""
         for i in range(analog_output_count):
-            config = AnalogConfig()
+            config = AOStatusConfig()
             config.clazz = cls
-            config.svariaton = svariaton
+            config.svariation = svariaton
             config.evariation = evariation
             self.analog_outputs.append(config)
 
-        return self
 
-    def allow_unsolicited(self, allow_unsolicited):
-        self.allow_unsolicited = allow_unsolicited
-        return self
+    def allow_unsolicited(self):
+        self.allow_unsolicited = True
+
 
     def disable_unsolicited(self):
         self.allow_unsolicited = False
-        return self
+
 
     def set_event_buffer_size(self, event_buffer_size):
         self.event_buffer_size = event_buffer_size
-        return self
+
 

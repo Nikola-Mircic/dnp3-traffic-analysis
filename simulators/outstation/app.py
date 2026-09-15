@@ -8,7 +8,8 @@ import time
 from pydnp3 import opendnp3
 
 from channel.channel import ChannelManager
-from outstation_builder import OutstationBuilder
+from config_builder import OutstationConfigBuilder
+from outstation_handler import OutstationHandler
 
 # Indexes used for our six example points. Must line up with configure_database() below.
 BINARY_INDEXES = (0, 1)    # Group 1  - Binary Input (digital)
@@ -70,17 +71,19 @@ def main():
     """The Outstation has been started from the command line. Keep the process alive to serve requests."""
     channel = ChannelManager()
 
-    app = (OutstationBuilder()
-            .set_name("New outstation")
-            .set_event_buffer_size(5)
-            .set_local_addr(2)
-            .set_remote_addr(1)
-            .set_channel(channel)
-           .add_binary_inputs(2, opendnp3.PointClass.Class1)
-           .add_analog_inputs(2, opendnp3.PointClass.Class2)
-           .add_counters(2, opendnp3.PointClass.Class3)
-           .build())
+    # Generating outstation config
+    builder = OutstationConfigBuilder()
+    builder.set_event_buffer_size(5)
+    builder.set_local_addr(2)
+    builder.set_remote_addr(1)
+    builder.add_binary_inputs(3, opendnp3.PointClass.Class1)
+    builder.add_analog_inputs(2, opendnp3.PointClass.Class2)
+    builder.add_counters(2, opendnp3.PointClass.Class3)
+    builder.add_binary_outputs(1, opendnp3.PointClass.Class1)
+    builder.add_analog_outputs(1, opendnp3.PointClass.Class1)
+    config = builder.build()
 
+    app = OutstationHandler("New outstation", channel, config)
 
     simulator = PointSimulator(app)
     simulator.start()
