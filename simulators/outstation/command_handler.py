@@ -3,6 +3,7 @@ from pydnp3 import opendnp3
 
 class OutstationCommandHandler(opendnp3.ICommandHandler):
     def __init__(self, oustation):
+        super().__init__()
         self.oustation = oustation
 
     def Start(self):

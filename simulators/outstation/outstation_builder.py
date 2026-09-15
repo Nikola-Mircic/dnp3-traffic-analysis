@@ -1,5 +1,5 @@
 from dnp3_python.dnp3station import outstation
-from pydnp3 import opendnp3, asiodnp3
+from pydnp3 import opendnp3, asiodnp3, openpal
 from pydnp3.opendnp3 import BinaryConfig, AnalogConfig, CounterConfig, FrozenCounterConfig
 
 from command_handler import OutstationCommandHandler
@@ -7,6 +7,7 @@ from outstation_handler import OutstationHandler
 
 class OutstationBuilder():
     def __init__(self):
+        self._outstation_ptr = None
         self.channel = None
         self.outstation_name = "outstation"
         self.local_addr=2
@@ -22,13 +23,13 @@ class OutstationBuilder():
 
     def _configure_stack(self):
         database_sizes = opendnp3.DatabaseSizes(
-            len(self.binary_input_count),
+            len(self.binary_inputs),
             0,
-            len(self.analog_input_count),
-            len(self.counter_count),
-            len(self.frozen_counter_count),
-            len(self.binary_output_count),
-            len(self.analog_output_count),
+            len(self.analog_inputs),
+            len(self.counters),
+            len(self.frozen_counters),
+            len(self.binary_outputs),
+            len(self.analog_outputs),
             0
         )
 
@@ -50,45 +51,41 @@ class OutstationBuilder():
 
         return stack
 
+    def _apply_config(self, dest, src):
+        for i in range(len(src)):
+            dest[i].clazz = src[i].clazz
+            dest[i].svariation = src[i].svariation
+            dest[i].evariation = src[i].evariation
+
     def _configure_database(self, dbConfig):
         """ Configure object groups for points """
 
-        for i in range(len(self.binary_inputs)):
-            dbConfig.binary[i] = self.binary_inputs[i]
-
-        for i in range(len(self.analog_inputs)):
-            dbConfig.analog[i] = self.analog_inputs[i]
-
-        for i in range(len(self.counters)):
-            dbConfig.counter[i] = self.counters[i]
-
-        for i in range(len(self.frozen_counters)):
-            dbConfig.frozenCounter[i] = self.frozen_counters[i]
-
-        for i in range(len(self.binary_outputs)):
-            dbConfig.boStatus[i] = self.binary_outputs[i]
-
-        for i in range(len(self.analog_outputs)):
-            dbConfig.aoStatus[i] = self.analog_outputs[i]
+        self._apply_config(dbConfig.binary, self.binary_inputs)
+        self._apply_config(dbConfig.analog, self.analog_inputs)
+        self._apply_config(dbConfig.counter, self.counters)
+        self._apply_config(dbConfig.frozenCounter, self.frozen_counters)
+        self._apply_config(dbConfig.boStatus, self.binary_outputs)
+        self._apply_config(dbConfig.aoStatus, self.analog_outputs)
 
     def build(self):
-        outstation_ptr = None
         # Configure outstation stack
         stack = self._configure_stack()
 
         # Configure point database
         self._configure_database(stack.dbConfig)
 
-        cmd_handler = OutstationCommandHandler(outstation_ptr)
-        ouststation_app = OutstationHandler(self.channel, outstation_ptr)
+        cmd_handler = OutstationCommandHandler(self._outstation_ptr)
+        ouststation_app = OutstationHandler(self.channel)
 
-        outstation_ptr = self.channel.AddOutstation(
+        self._outstation_ptr = self.channel.AddOutstation(
             self.outstation_name,
             cmd_handler,
             ouststation_app,
-            self.stack_config)
+            stack)
 
-        outstation_ptr.Enable()
+        self._outstation_ptr.Enable()
+
+        ouststation_app.set_oustation_ptr(self._outstation_ptr)
 
         return ouststation_app
 

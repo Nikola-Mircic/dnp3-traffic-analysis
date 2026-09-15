@@ -50,17 +50,17 @@ class PointSimulator(threading.Thread):
             # Binary Input: toggle each point's state.
             for index in BINARY_INDEXES:
                 self._binary_state[index] = not self._binary_state[index]
-                self.app.apply_update(opendnp3.Binary(self._binary_state[index]), index)
+                self.app.update(opendnp3.Binary(self._binary_state[index]), index)
 
             # Analog Input: random measured value.
             for index in ANALOG_INDEXES:
                 value = round(random.uniform(0.0, 100.0), 3)
-                self.app.apply_update(opendnp3.Analog(value), index)
+                self.app.update(opendnp3.Analog(value), index)
 
             # Counter: monotonically increasing count.
             for index in COUNTER_INDEXES:
                 self._counter_value[index] += random.randint(1, 5)
-                self.app.apply_update(opendnp3.Counter(self._counter_value[index]), index)
+                self.app.update(opendnp3.Counter(self._counter_value[index]), index)
 
             self._stop_event.wait(self.interval)
         _log.debug('PointSimulator stopped.')
@@ -78,7 +78,7 @@ def main():
             .set_channel(channel)
            .add_binary_inputs(2, opendnp3.PointClass.Class1)
            .add_analog_inputs(2, opendnp3.PointClass.Class2)
-           .add_counter_inputs(2, opendnp3.PointClass.Class3)
+           .add_counters(2, opendnp3.PointClass.Class3)
            .build())
 
 

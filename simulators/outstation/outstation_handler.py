@@ -1,9 +1,12 @@
 from pydnp3 import opendnp3, openpal, asiopal, asiodnp3
 
 class OutstationHandler(opendnp3.IOutstationApplication):
-    def __init__(self, channel, oustation_ptr):
+    def __init__(self, channel):
         super().__init__()
         self.channel = channel
+        self.oustation_ptr = None
+
+    def set_oustation_ptr(self, oustation_ptr):
         self.oustation_ptr = oustation_ptr
 
     def shutdown(self):
@@ -25,8 +28,8 @@ class OutstationHandler(opendnp3.IOutstationApplication):
         application_iin.needTime = False
         # Just for testing purposes, convert it to an IINField and display the contents of the two bytes.
         iin_field = application_iin.ToIIN()
-        _log.debug('Outstation IIN flags: IINField LSB={}, MSB={}'.format(iin_field.LSB,
-                                                                                             iin_field.MSB))
+        print('Outstation IIN flags: IINField LSB={}, MSB={}'.format(iin_field.LSB, iin_field.MSB))
+
         return application_iin
 
     # Overridden method
@@ -71,7 +74,7 @@ class OutstationHandler(opendnp3.IOutstationApplication):
         :param value: An instance of Analog, Binary, or another opendnp3 data value.
         :param index: (integer) Index of the data definition in the opendnp3 database.
         """
-        _log.debug('Recording {} measurement, index={}, value={}'.format(type(value).__name__, index, value.value))
+        print('Recording {} measurement, index={}, value={}'.format(type(value).__name__, index, value.value))
         builder = asiodnp3.UpdateBuilder()
         builder.Update(value, index)
         update = builder.Build()
