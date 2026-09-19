@@ -21,8 +21,9 @@ class OutstationCommandHandler(opendnp3.ICommandHandler):
         :param index: int
         :return: CommandStatus
         """
-        self.oustation.process_point_value('Select', command, index, None)
-        return opendnp3.CommandStatus.SUCCESS
+        if self.oustation.process_point_value('Select', command, index, None):
+            return opendnp3.CommandStatus.SUCCESS
+        return opendnp3.CommandStatus.CANCELLED
 
     def Operate(self, command, index, op_type):
         """
@@ -34,5 +35,7 @@ class OutstationCommandHandler(opendnp3.ICommandHandler):
         :param op_type: OperateType
         :return: CommandStatus
         """
-        self.oustation.process_point_value('Operate', command, index, op_type)
-        return opendnp3.CommandStatus.SUCCESS
+        if self.oustation.process_point_value('Operate', command, index, op_type):
+            return opendnp3.CommandStatus.SUCCESS
+
+        return opendnp3.CommandStatus.FORMAT_ERROR

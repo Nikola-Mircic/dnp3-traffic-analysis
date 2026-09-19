@@ -1,5 +1,5 @@
 from pydnp3 import opendnp3, openpal, asiopal, asiodnp3
-from pydnp3.opendnp3 import OperateType, ControlRelayOutputBlock
+import threading
 
 from command_handler import OutstationCommandHandler
 import logging
@@ -46,9 +46,6 @@ class OutstationHandler(opendnp3.IOutstationApplication):
         application_iin.deviceTrouble = False
         application_iin.localControl = False
         application_iin.needTime = False
-        # Just for testing purposes, convert it to an IINField and display the contents of the two bytes.
-        iin_field = application_iin.ToIIN()
-        _log.debug('Outstation IIN flags: IINField LSB={}, MSB={}'.format(iin_field.LSB, iin_field.MSB))
 
         return application_iin
 
@@ -75,14 +72,111 @@ class OutstationHandler(opendnp3.IOutstationApplication):
 
     def process_point_value(self, command_type, command, index, op_type):
         """
-            A PointValue was received from the Master. Process its payload.
+            A command was received from the Master. Validate it on Select,
+            and actually apply it to the database on Operate - mimicking how
+            a real device validates a command before actuating hardware, then
+            reports the resulting output state back to the Master.
 
         :param command_type: (string) Either 'Select' or 'Operate'.
         :param command: A ControlRelayOutputBlock or else a wrapped data value (AnalogOutputInt16, etc.).
         :param index: (integer) DNP3 index of the payload's data definition.
         :param op_type: An OperateType, or None if command_type == 'Select'.
         """
-        _log.debug('Processing received point value for index {}: {}'.format(index, command))
+        _log.debug('Processing {} for index {}: {}'.format(command_type, index, command))
+
+        # Select is a feasibility check only - a real device would confirm the
+        # point exists and the command is well-formed, but must NOT actuate
+        # anything yet. Only Operate should cause a real state change.
+        if command_type == 'Select':
+            return True
+
+        if isinstance(command, opendnp3.ControlRelayOutputBlock):
+            # Execute the CROB command
+            self._apply_binary_output_command(command, index)
+            return True
+        elif isinstance(command, (opendnp3.AnalogOutputInt16,
+                                   opendnp3.AnalogOutputInt32,
+                                   opendnp3.AnalogOutputFloat32,
+                                   opendnp3.AnalogOutputDouble64)):
+            self._apply_analog_output_command(command, index)
+            return True
+        else:
+            _log.warning('Unrecognized command type for index {}: {}'.format(index, type(command)))
+            return False
+
+    def _apply_binary_output_command(self, command, index):
+        """
+            Actuate a CROB (Group 12) command and reflect the result in
+            Binary Output Status (Group 10), the way a real relay/breaker
+            would report its new state after actuation.
+
+            - LATCH_ON / LATCH_OFF: maintained state change (e.g. a simple
+              relay or maintained contact) - stays until commanded otherwise.
+            - CLOSE_PULSE_ON / TRIP_PULSE_ON: two-output breaker control -
+              the close/trip coil pulses for onTimeMS, but the resulting
+              breaker position (closed/open) persists after the pulse ends.
+            - PULSE_ON: activation-model pulse (e.g. a horn or light) -
+              output goes active for onTimeMS then automatically reverts.
+            - PULSE_OFF: non-interoperable - should not be used for newer apps
+        """
+        code = command.functionCode
+
+        _log.debug("Executing {} for index {}: {}".format(code, index, command))
+
+        on_codes = (opendnp3.ControlCode.LATCH_ON,
+                    opendnp3.ControlCode.LATCH_ON_CANCEL)
+
+        off_codes = (opendnp3.ControlCode.LATCH_OFF,
+                     opendnp3.ControlCode.LATCH_OFF_CANCEL)
+
+        on_pulse = (opendnp3.ControlCode.PULSE_ON,
+                    opendnp3.ControlCode.CLOSE_PULSE_ON,
+                    opendnp3.ControlCode.CLOSE_PULSE_ON_CANCEL)
+
+        off_pulse = (opendnp3.ControlCode.TRIP_PULSE_ON,
+                     opendnp3.ControlCode.TRIP_PULSE_ON_CANCEL)
+
+        if code in on_codes:
+            _log.debug('Binary output index {} -> ON (maintained)'.format(index))
+            self.update(opendnp3.BinaryOutputStatus(True), index)
+
+        elif code in off_codes:
+            _log.debug('Binary output index {} -> OFF (maintained)'.format(index))
+            self.update(opendnp3.BinaryOutputStatus(False), index)
+
+        elif code in on_pulse:
+            _log.debug('Binary output index {} -> ON (pulse, {}ms)'.format(index, command.onTimeMS))
+            self.update(opendnp3.BinaryOutputStatus(True), index)
+
+            on_time_seconds = max(command.onTimeMS, 0) / 1000.0
+            timer = threading.Timer(
+                on_time_seconds,
+                lambda: self.update(opendnp3.BinaryOutputStatus(False), index)
+            )
+            timer.daemon = True
+            timer.start()
+        elif code in off_pulse:
+            _log.debug('Binary output index {} -> OFF (pulse, {}ms)'.format(index, command.onTimeMS))
+            self.update(opendnp3.BinaryOutputStatus(False), index)
+
+            off_time = max(command.onTimeMS, 0) / 1000.0
+            timer = threading.Timer(
+                off_time,
+                lambda: self.update(opendnp3.BinaryOutputStatus(False), index)
+            )
+            timer.daemon = True
+            timer.start()
+        else:
+            _log.warning('Unsupported/undefined control code {} for index {}'.format(code, index))
+
+    def _apply_analog_output_command(self, command, index):
+        """
+            Actuate an Analog Output (Group 41) command and reflect the
+            commanded value in Analog Output Status (Group 40), the way a
+            real analog output card would report the value it's now driving.
+        """
+        _log.debug('Analog output index {} -> {}'.format(index, command.value))
+        self.update(opendnp3.AnalogOutputStatus(command.value), index)
 
     def update(self, value, index):
         """
@@ -93,7 +187,6 @@ class OutstationHandler(opendnp3.IOutstationApplication):
         :param value: An instance of Analog, Binary, or another opendnp3 data value.
         :param index: (integer) Index of the data definition in the opendnp3 database.
         """
-        _log.debug('Recording {} measurement, index={}, value={}'.format(type(value).__name__, index, value.value))
         builder = asiodnp3.UpdateBuilder()
         builder.Update(value, index)
         update = builder.Build()
