@@ -9,6 +9,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 ENV DNP3_PORT=20000
+ENV PYTHONUNBUFFERED=1
 
 EXPOSE 20000
 
