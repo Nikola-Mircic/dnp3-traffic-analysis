@@ -2,14 +2,11 @@ from typing import Any
 
 from pydnp3 import opendnp3, asiopal, asiodnp3
 
-import logging
-
 LOCAL_IP = "0.0.0.0"
 PORT = 20000
 _threads_to_allocate = 1
 
 LOG_LEVELS = opendnp3.levels.NORMAL | opendnp3.levels.ALL_COMMS
-_log = logging.getLogger(__name__)
 
 class ChannelListener(asiodnp3.IChannelListener):
     """
@@ -19,7 +16,7 @@ class ChannelListener(asiodnp3.IChannelListener):
         super(ChannelListener, self).__init__()
 
     def OnStateChange(self, state):
-        _log.debug('Channel state change: state={}'.format(state))
+        print('Channel state change: state={}'.format(state))
 
 
 class ChannelManager:

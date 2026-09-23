@@ -1,6 +1,3 @@
-import logging
-import sys
-
 import threading
 import signal
 
@@ -10,13 +7,6 @@ from channel import ChannelManager
 from config_builder import OutstationConfigBuilder
 from outstation_handler import OutstationHandler
 from point_simulator import PointSimulator, CsvAnalogInputFunction, CsvCountersFunction
-
-stdout_stream = logging.StreamHandler(sys.stdout)
-stdout_stream.setFormatter(logging.Formatter('%(asctime)s\t%(name)s\t%(levelname)s\t%(message)s'))
-
-_log = logging.getLogger(__name__)
-_log.addHandler(stdout_stream)
-_log.setLevel(logging.DEBUG)
 
 csv_filepath = "turbines.csv"
 
@@ -54,7 +44,7 @@ def main():
     print("Running. Press Ctrl+C or stop the container to exit.")
     stop.wait()
 
-    _log.debug("Exiting...")
+    print("Exiting...")
     simulator.stop()
     app.shutdown()
 

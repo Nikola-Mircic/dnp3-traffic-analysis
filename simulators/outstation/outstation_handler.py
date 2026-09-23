@@ -2,15 +2,6 @@ from pydnp3 import opendnp3, asiodnp3
 import threading
 
 from command_handler import OutstationCommandHandler
-import logging
-import sys
-
-stdout_stream = logging.StreamHandler(sys.stdout)
-stdout_stream.setFormatter(logging.Formatter('%(asctime)s\t%(name)s\t%(levelname)s\t%(message)s'))
-
-_log = logging.getLogger(__name__)
-_log.addHandler(stdout_stream)
-_log.setLevel(logging.DEBUG)
 
 class OutstationHandler(opendnp3.IOutstationApplication):
     def __init__(self, outstation_name, channel, config):
@@ -46,36 +37,36 @@ class OutstationHandler(opendnp3.IOutstationApplication):
     # Overridden method
     def ColdRestartSupport(self):
         """Return a RestartMode enumerated value indicating whether cold restart is supported."""
-        _log.debug('Checking cold restart support...')
+        print('Checking cold restart support...')
         return opendnp3.RestartMode.SUPPORTED_DELAY_COARSE
 
     # Overridden method
     def WarmRestartSupport(self):
         """Return a RestartMode enumerated value indicating whether a warm restart is supported."""
-        _log.debug('Checking warm restart support...')
+        print('Checking warm restart support...')
         return opendnp3.RestartMode.SUPPORTED_DELAY_FINE
 
     def ColdRestart(self):
-        _log.debug('Restarting [ COLD ]....')
+        print('Restarting [ COLD ]....')
         return 5 # COARSE --> time in seconds
 
     def WarmRestart(self):
-        _log.debug('Restarting [ WARM ]....')
+        print('Restarting [ WARM ]....')
         return 4500 # FINE --> time in milliseconds
 
     # Overridden method
     def SupportsAssignClass(self):
-        _log.debug('Checking class assigning support...')
+        print('Checking class assigning support...')
         return False
 
     # Overridden method
     def SupportsWriteAbsoluteTime(self):
-        _log.debug('Checking write absolute time support...')
+        print('Checking write absolute time support...')
         return True
 
     # Overridden method
     def SupportsWriteTimeAndInterval(self):
-        _log.debug('Checking write time interval support...')
+        print('Checking write time interval support...')
         return False
 
 
@@ -91,7 +82,7 @@ class OutstationHandler(opendnp3.IOutstationApplication):
         :param index: (integer) DNP3 index of the payload's data definition.
         :param op_type: An OperateType, or None if command_type == 'Select'.
         """
-        _log.debug('Processing {} for index {}: {}'.format(command_type, index, command))
+        print('Processing {} for index {}: {}'.format(command_type, index, command))
 
         # Select is a feasibility check only - a real device would confirm the
         # point exists and the command is well-formed, but must NOT actuate
@@ -108,7 +99,7 @@ class OutstationHandler(opendnp3.IOutstationApplication):
                                    opendnp3.AnalogOutputDouble64)):
             return  self._apply_analog_output_command(command, index)
         else:
-            _log.warning('Unrecognized command type for index {}: {}'.format(index, type(command)))
+            print('Unrecognized command type for index {}: {}'.format(index, type(command)))
             return False
 
     def _apply_binary_output_command(self, command, index):
@@ -128,7 +119,7 @@ class OutstationHandler(opendnp3.IOutstationApplication):
         """
         code = command.functionCode
 
-        _log.debug("Executing {} for index {}: {}".format(code, index, command))
+        print("Executing {} for index {}: {}".format(code, index, command))
 
         on_codes = (opendnp3.ControlCode.LATCH_ON,
                     opendnp3.ControlCode.LATCH_ON_CANCEL)
@@ -144,17 +135,17 @@ class OutstationHandler(opendnp3.IOutstationApplication):
                      opendnp3.ControlCode.TRIP_PULSE_ON_CANCEL)
 
         if code in on_codes:
-            _log.debug('Binary output index {} -> ON (maintained)'.format(index))
+            print('Binary output index {} -> ON (maintained)'.format(index))
             self.update(opendnp3.BinaryOutputStatus(True), index)
             return True
 
         elif code in off_codes:
-            _log.debug('Binary output index {} -> OFF (maintained)'.format(index))
+            print('Binary output index {} -> OFF (maintained)'.format(index))
             self.update(opendnp3.BinaryOutputStatus(False), index)
             return True
 
         elif code in on_pulse:
-            _log.debug('Binary output index {} -> ON (pulse, {}ms)'.format(index, command.onTimeMS))
+            print('Binary output index {} -> ON (pulse, {}ms)'.format(index, command.onTimeMS))
             self.update(opendnp3.BinaryOutputStatus(True), index)
 
             on_time_seconds = max(command.onTimeMS, 0) / 1000.0
@@ -167,7 +158,7 @@ class OutstationHandler(opendnp3.IOutstationApplication):
 
             return True
         elif code in off_pulse:
-            _log.debug('Binary output index {} -> OFF (pulse, {}ms)'.format(index, command.onTimeMS))
+            print('Binary output index {} -> OFF (pulse, {}ms)'.format(index, command.onTimeMS))
             self.update(opendnp3.BinaryOutputStatus(False), index)
 
             off_time = max(command.onTimeMS, 0) / 1000.0
@@ -180,7 +171,7 @@ class OutstationHandler(opendnp3.IOutstationApplication):
 
             return True
         else:
-            _log.warning('Unsupported/undefined control code {} for index {}'.format(code, index))
+            print('Unsupported/undefined control code {} for index {}'.format(code, index))
             return False
 
     def _apply_analog_output_command(self, command, index):
@@ -189,7 +180,7 @@ class OutstationHandler(opendnp3.IOutstationApplication):
         commanded value in Analog Output Status (Group 40), the way a
         real analog output card would report the value it's now driving.
         """
-        _log.debug('Analog output index {} -> {}'.format(index, command.value))
+        print('Analog output index {} -> {}'.format(index, command.value))
         self.update(opendnp3.AnalogOutputStatus(command.value), index)
         return True
 
