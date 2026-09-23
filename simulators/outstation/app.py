@@ -8,7 +8,7 @@ from config_builder import OutstationConfigBuilder
 from outstation_handler import OutstationHandler
 from point_simulator import PointSimulator, CsvAnalogInputFunction, CsvCountersFunction
 
-csv_filepath = "turbines.csv"
+csv_filepath = "turbines/turbines.csv"
 
 def main():
     """The Outstation has been started from the command line. Keep the process alive to serve requests."""
@@ -29,6 +29,7 @@ def main():
 
     simulator = PointSimulator(app, 5)
 
+    # Use data from a csv file for simulation
     simulator.add_analog_input_function(0, CsvAnalogInputFunction(csv_filepath, "Voltage L1 / U (V)"))
     simulator.add_analog_input_function(1, CsvAnalogInputFunction(csv_filepath, "Voltage L2 / V (V)"))
     simulator.add_analog_input_function(2, CsvAnalogInputFunction(csv_filepath, "Voltage L3 / W (V)"))
