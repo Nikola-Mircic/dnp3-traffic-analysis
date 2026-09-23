@@ -1,9 +1,31 @@
 services:
-  outstation:
+  outstation-1:
     build: ./simulators/outstation
     platform: linux/amd64
-    container_name: test-outstation
+    container_name: outstation-1
     restart: no
     ports:
-      - "20000:20000"
+      - "20001:20000"
+    environment:
+        TURBINE_DATA: "turbines/turbine_1.csv"
+
+  outstation-2:
+    build: ./simulators/outstation
+    platform: linux/amd64
+    container_name: outstation-2
+    restart: no
+    ports:
+      - "20002:20000"
+    environment:
+      TURBINE_DATA: "turbines/turbine_2.csv"
+
+  outstation-3:
+    build: ./simulators/outstation
+    platform: linux/amd64
+    container_name: outstation-3
+    restart: no
+    ports:
+      - "20003:20000"
+    environment:
+      TURBINE_DATA: "turbines/turbine_3.csv"
 

@@ -1,5 +1,7 @@
+import os
 import threading
 import signal
+import os
 
 from pydnp3 import opendnp3
 
@@ -8,7 +10,7 @@ from config_builder import OutstationConfigBuilder
 from outstation_handler import OutstationHandler
 from point_simulator import PointSimulator, CsvAnalogInputFunction, CsvCountersFunction
 
-csv_filepath = "turbines/turbines.csv"
+csv_filepath = os.getenv("TURBINE_DATA", "turbines/turbine_1.csv")
 
 def main():
     """The Outstation has been started from the command line. Keep the process alive to serve requests."""
@@ -17,8 +19,8 @@ def main():
     # Generating outstation config
     builder = OutstationConfigBuilder()
     builder.set_event_buffer_size(5)
-    builder.set_local_addr(2)
-    builder.set_remote_addr(1)
+    builder.set_local_addr(1)
+    builder.set_remote_addr(2)
     # 3 analog inputs for 3 phases ( voltage )
     builder.add_analog_inputs(3, opendnp3.PointClass.Class1)
     # 1 counter for total energy exported
