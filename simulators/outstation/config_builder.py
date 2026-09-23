@@ -1,4 +1,3 @@
-from dnp3_python.dnp3station import outstation
 from pydnp3 import opendnp3, asiodnp3, openpal
 from pydnp3.opendnp3 import (BinaryConfig,
                              AnalogConfig,
@@ -7,10 +6,7 @@ from pydnp3.opendnp3 import (BinaryConfig,
                              BOStatusConfig,
                              AOStatusConfig)
 
-from command_handler import OutstationCommandHandler
-from outstation_handler import OutstationHandler
-
-class OutstationConfigBuilder():
+class OutstationConfigBuilder:
     def __init__(self):
         self.local_addr=2
         self.remote_addr=1

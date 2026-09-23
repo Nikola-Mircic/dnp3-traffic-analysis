@@ -1,1 +1,2 @@
 dnp3-python
+pandas
