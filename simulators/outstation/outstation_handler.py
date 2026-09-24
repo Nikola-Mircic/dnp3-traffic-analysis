@@ -5,8 +5,7 @@ from command_handler import OutstationCommandHandler
 
 class OutstationHandler(opendnp3.IOutstationApplication):
     def __init__(self, outstation_name, channel, config):
-        super().__init__()
-        self._outstation_ptr = None
+        super(OutstationHandler, self).__init__()
         self.channel = channel
         self.outstation_name = outstation_name
 

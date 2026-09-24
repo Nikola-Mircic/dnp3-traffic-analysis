@@ -1,4 +1,10 @@
 services:
+  master:
+    build: ./simulators/master
+    platform: linux/amd64
+    container_name: master
+    restart: no
+
   outstation-1:
     build: ./simulators/outstation
     platform: linux/amd64

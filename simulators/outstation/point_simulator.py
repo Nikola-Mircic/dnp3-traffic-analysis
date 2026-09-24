@@ -6,8 +6,10 @@ def CsvBinaryInputFunction(path, colname):
     print("Creating binary input function for {} [{}]".format(colname, path))
     df = pd.read_csv(path)
     def function(app, index, cycles):
-        value = float(df[colname][cycles+1])
-        app.update(opendnp3.Binary(value), index)
+        raw = df[colname][cycles+1]
+        if not pd.isna(raw):
+            value = bool(raw)
+            app.update(opendnp3.Binary(value), index)
 
     return function
 
@@ -16,8 +18,10 @@ def CsvAnalogInputFunction(path, colname):
     print("Creating analog input function for {} [{}]".format(colname, path))
     df = pd.read_csv(path)
     def function(app, index, cycles):
-        value = float(df[colname][cycles+1])
-        app.update(opendnp3.Analog(value), index)
+        raw = df[colname][cycles+1]
+        if not pd.isna(raw):
+            value = float(raw)
+            app.update(opendnp3.Analog(value), index)
 
     return function
 
@@ -26,8 +30,10 @@ def CsvCountersFunction(path, colname):
     print("Creating counter function for {} [{}]".format(colname, path))
     df = pd.read_csv(path)
     def function(app, index, cycles):
-        value = int(df[colname][cycles+1])
-        app.update(opendnp3.Counter(value), index)
+        raw = df[colname][cycles+1]
+        if not pd.isna(raw):
+            value = int(raw)
+            app.update(opendnp3.Counter(value), index)
 
     return function
 
@@ -36,8 +42,10 @@ def CsvFrozenCountersFunction(path, colname):
     print("Creating frozen counter function for {} [{}]".format(colname, path))
     df = pd.read_csv(path)
     def function(app, index, cycles):
-        value = int(df[colname][cycles+1])
-        app.update(opendnp3.FrozenCounter(value), index)
+        raw = df[colname][cycles+1]
+        if not pd.isna(raw):
+            value = int(raw)
+            app.update(opendnp3.FrozenCounter(value), index)
 
     return function
 
