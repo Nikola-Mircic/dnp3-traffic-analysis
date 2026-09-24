@@ -2,8 +2,10 @@ from typing import Any
 
 from pydnp3 import opendnp3, asiopal, asiodnp3
 
+HOST = "outstation-1"
 LOCAL_IP = "0.0.0.0"
 PORT = 20000
+
 _threads_to_allocate = 1
 
 LOG_LEVELS = opendnp3.levels.NORMAL | opendnp3.levels.ALL_COMMS
@@ -27,9 +29,10 @@ class ChannelManager:
         self.retry_parameters = asiopal.ChannelRetry().Default()
         self.listener = ChannelListener()
 
-        self.channel = self.manager.AddTCPServer("Outstation Server",
+        self.channel = self.manager.AddTCPClient("Master Client",
                                      LOG_LEVELS,
                                      self.retry_parameters,
+                                     HOST,
                                      LOCAL_IP,
                                      PORT,
                                      self.listener)
@@ -37,9 +40,9 @@ class ChannelManager:
     def Shutdown(self):
         self.manager.Shutdown()
 
-    def AddOutstation(self,
+    def AddMaster(self,
                       id: Any,
-                      commandHandler: Any,
+                      soe_handler: Any,
                       application: Any,
                       config: Any):
-        return self.channel.AddOutstation(id, commandHandler, application, config)
+        return self.channel.AddMaster(id, soe_handler, application, config)
