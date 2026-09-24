@@ -16,6 +16,7 @@ class Master(opendnp3.IMasterApplication):
 
         self.stack_config.master.disableUnsolOnStartup = False
         self.stack_config.master.ignoreRestartIIN = False
+        self.stack_config.master.integrityOnEventOverflowIIN = False
 
         self.stack_config.link.LocalAddr = 2
         self.stack_config.link.RemoteAddr = 1
@@ -27,8 +28,8 @@ class Master(opendnp3.IMasterApplication):
                                                   self,
                                                   self.stack_config)
 
-        self.scan = self._master_ptr.AddClassScan(opendnp3.ClassField().AllClasses(),
-                                                  openpal.TimeDuration().Seconds(10),
+        self.scan = self._master_ptr.AddClassScan(opendnp3.ClassField().AllEventClasses(),
+                                                  openpal.TimeDuration().Seconds(2),
                                                   opendnp3.TaskConfig().Default())
 
         self._master_ptr.Enable()

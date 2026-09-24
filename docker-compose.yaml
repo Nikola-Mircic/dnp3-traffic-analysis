@@ -5,6 +5,14 @@ services:
     container_name: master
     restart: no
 
+  # Master's side-car for monitoring traffic outside docker network
+  tcpdump:
+    image: nicolaka/netshoot
+    network_mode: "service:master"
+    command: tcpdump -U -i eth0 -w /captures/dnp3.pcap tcp port 20000
+    volumes:
+      - ./pcaps:/captures
+
   outstation-1:
     build: ./simulators/outstation
     platform: linux/amd64

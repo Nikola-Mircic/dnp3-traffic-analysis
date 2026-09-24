@@ -18,7 +18,7 @@ def main():
 
     # Generating outstation config
     builder = OutstationConfigBuilder()
-    builder.set_event_buffer_size(5)
+    builder.set_event_buffer_size(10)
     builder.set_local_addr(1)
     builder.set_remote_addr(2)
     # 3 analog inputs for 3 phases ( voltage )
