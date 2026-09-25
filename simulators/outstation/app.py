@@ -18,7 +18,7 @@ def main():
 
     # Generating outstation config
     builder = OutstationConfigBuilder()
-    builder.set_event_buffer_size(5)
+    builder.set_event_buffer_size(10)
     builder.set_local_addr(1)
     builder.set_remote_addr(2)
     # 3 analog inputs for 3 phases ( voltage )
@@ -29,7 +29,7 @@ def main():
 
     app = OutstationHandler("New outstation", channel, config)
 
-    simulator = PointSimulator(app, 5)
+    simulator = PointSimulator(app, 3)
 
     # Use data from a csv file for simulation
     simulator.add_analog_input_function(0, CsvAnalogInputFunction(csv_filepath, "Voltage L1 / U (V)"))
