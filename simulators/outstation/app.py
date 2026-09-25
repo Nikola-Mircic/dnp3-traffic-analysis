@@ -29,7 +29,7 @@ def main():
 
     app = OutstationHandler("New outstation", channel, config)
 
-    simulator = PointSimulator(app, 5)
+    simulator = PointSimulator(app, 3)
 
     # Use data from a csv file for simulation
     simulator.add_analog_input_function(0, CsvAnalogInputFunction(csv_filepath, "Voltage L1 / U (V)"))

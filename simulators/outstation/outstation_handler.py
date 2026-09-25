@@ -1,6 +1,8 @@
 from pydnp3 import opendnp3, asiodnp3
 import threading
 
+from pydnp3.opendnp3 import EventMode
+
 from command_handler import OutstationCommandHandler
 
 class OutstationHandler(opendnp3.IOutstationApplication):
