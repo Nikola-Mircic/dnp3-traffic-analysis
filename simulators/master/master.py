@@ -1,5 +1,3 @@
-import time
-
 from pydnp3 import opendnp3, asiodnp3, openpal
 
 from soe_handler import SOEHandler
@@ -34,6 +32,10 @@ class Master(opendnp3.IMasterApplication):
 
         self._master_ptr.Enable()
 
+
+    def Shutdown(self):
+        self._master_ptr.Shutdown()
+        self.channel.Shutdown()
 
     def AssignClassDuringStartup(self):
         return False
