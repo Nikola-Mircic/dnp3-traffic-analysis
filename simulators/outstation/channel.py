@@ -37,8 +37,8 @@ class ChannelManager:
         self.manager.Shutdown()
 
     def AddOutstation(self,
-                      id: Any,
-                      commandHandler: Any,
-                      application: Any,
-                      config: Any):
+                      id,
+                      commandHandler,
+                      application,
+                      config):
         return self.channel.AddOutstation(id, commandHandler, application, config)

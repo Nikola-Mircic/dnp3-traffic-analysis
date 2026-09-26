@@ -40,8 +40,8 @@ class ChannelManager:
         self.manager.Shutdown()
 
     def AddMaster(self,
-                      id: Any,
-                      soe_handler: Any,
-                      application: Any,
-                      config: Any):
+                      id,
+                      soe_handler,
+                      application,
+                      config):
         return self.channel.AddMaster(id, soe_handler, application, config)
