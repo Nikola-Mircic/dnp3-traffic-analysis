@@ -1,0 +1,3 @@
+dnp3-python
+pyshark
+dotenv

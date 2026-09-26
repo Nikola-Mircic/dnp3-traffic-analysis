@@ -1,17 +1,17 @@
-import asyncio
-import os
-
 import pyshark
 from dotenv import load_dotenv
 
+from services.pcap_file_source import PcapFilePacketSource
+
 load_dotenv()
 
-def listen():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+def main():
+    source = PcapFilePacketSource("./dnp3.pcap", display_filter="dnp3")
 
-    capture = pyshark.LiveCapture(interface='Ethernet', bpf_filter="tcp port 20000", eventloop=loop, tshark_path=os.getenv('TSHARK_PATH'))
-    capture.apply_on_packets(print)
+    packets = []
+    for packet in source.packets():
+        packets.append(packet)
+
 
 if __name__ == '__main__':
-    listen()
+    main()
