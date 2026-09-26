@@ -17,7 +17,7 @@ class OutstationConfigBuilder:
 
         self.binary_outputs = []
         self.analog_outputs = []
-        self.allow_unsolicited = False
+        self._allow_unsolicited = False
         self.event_buffer_size = 10
 
     def _configure_stack(self):
@@ -42,7 +42,7 @@ class OutstationConfigBuilder:
             maxFrozenCounterEvents=self.event_buffer_size,
         )
 
-        stack.outstation.params.allowUnsolicited = self.allow_unsolicited
+        stack.outstation.params.allowUnsolicited = self._allow_unsolicited
 
         stack.link.LocalAddr = self.local_addr
         stack.link.RemoteAddr = self.remote_addr
@@ -190,11 +190,11 @@ class OutstationConfigBuilder:
 
 
     def allow_unsolicited(self):
-        self.allow_unsolicited = True
+        self._allow_unsolicited = True
 
 
     def disable_unsolicited(self):
-        self.allow_unsolicited = False
+        self._allow_unsolicited = False
 
 
     def set_event_buffer_size(self, event_buffer_size):
