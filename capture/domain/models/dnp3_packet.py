@@ -33,6 +33,8 @@ class FunctionCode(IntEnum):
     RESPONSE = 0x81 # Standard reply
     UNSOLICITED_RESPONSE = 0x82 # Outstation-initiated messages sent without preceding request
 
+    UNDEFINED = 0xFF
+
 
 @dataclass
 class IINFlags:
