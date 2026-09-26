@@ -2,6 +2,7 @@ FROM --platform=linux/amd64 python:3.10-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONFAULTHANDLER=1
 
 RUN apt-get update && \
     echo "wireshark-common wireshark-common/install-setuid boolean true" | debconf-set-selections && \

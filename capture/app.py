@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 
+from domain.models.dnp3_packet import FunctionCode
 from services.adapters.pyshark_adapter import PySharkAdapter
 from services.source.live_packet_source import LivePacketSource
 from services.source.pcap_file_source import PcapFilePacketSource
@@ -13,11 +14,12 @@ def main():
     adapter = PySharkAdapter()
 
     for packet in live_source.packets():
-        print(packet.dnp3)
-        print(dir(packet["dnp3"]))
         result = adapter.adapt(packet)
 
-        print("[{}] {}".format(result.captured_at, result.application.function_code))
+        print("[{}] {} from {}/{}".format(result.captured_at,
+                                       result.application.function_code.name,
+                                       "MASTER" if result.data_link.control.dir else "OUTSTATION",
+                                        result.data_link.source))
 
 if __name__ == '__main__':
     main()

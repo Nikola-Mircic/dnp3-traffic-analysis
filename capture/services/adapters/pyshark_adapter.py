@@ -20,7 +20,6 @@ class PySharkAdapter(PacketAdapter):
         if not hasattr(raw_packet, "dnp3"):
             return None
 
-        print("Parsing a Dnp3 packet...")
         dnp3_layer = raw_packet.dnp3
 
         return DNP3Frame(
@@ -33,17 +32,13 @@ class PySharkAdapter(PacketAdapter):
 
     @staticmethod
     def _extract_timestamp(raw_packet):
-        print("Parsed timestamp: {}".format(raw_packet.sniff_time))
         return raw_packet.sniff_time
 
     @staticmethod
     def _parse_data_link(layer):
-        print("Parsing Data Link Header...")
 
         source = _get_int(layer, "src")
         destination = _get_int(layer, "dst")
-
-        print("[Source -> Destination]: {} -> {}".format(source, destination))
 
         control = ControlField(
             dir=_get_bool(layer, "ctl_dir"),
@@ -52,8 +47,6 @@ class PySharkAdapter(PacketAdapter):
             fcv=_get_bool(layer, "ctl_fcv"),
             function_code=_get_int(layer, "ctl_func"),
         )
-
-        print("From: {}".format("MASTER" if control.dir else "OUTSTATION"))
 
         return DataLinkHeader(
             source=source,
@@ -80,8 +73,6 @@ class PySharkAdapter(PacketAdapter):
             function_code = FunctionCode(func_raw)
         except ValueError:
             function_code = func_raw  # unknown/vendor-specific code, keep raw int
-
-        print("Function Code: {}".format(function_code))
 
         iin = None
         if function_code in (FunctionCode.RESPONSE, FunctionCode.UNSOLICITED_RESPONSE):
