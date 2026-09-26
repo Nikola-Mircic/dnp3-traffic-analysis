@@ -21,8 +21,7 @@ class ChannelListener(asiodnp3.IChannelListener):
 
 class ChannelManager:
     def __init__(self):
-        self.log_handler = asiodnp3.ConsoleLogger().Create()
-        self.manager = asiodnp3.DNP3Manager(_threads_to_allocate)#, self.log_handler)
+        self.manager = asiodnp3.DNP3Manager(_threads_to_allocate)
 
         self.retry_parameters = asiopal.ChannelRetry().Default()
         self.listener = ChannelListener()
