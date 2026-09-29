@@ -42,60 +42,42 @@ def _list_to_quality_obj(val_list, binary=False, analog=False, counter=False):
 
     return point
 
-def BinaryPointParser(layer):
-    """
-    Parse values and flags for binary input points from a dnp3 layer of pyshark packet
-    :param layer: DNP3 layer from pyshark
-    :return: values and flags as two separate lists
-    """
-    # parse list of quality bits for each point
-    values = [f.int_value == 1 for f in layer.get_field("al_biq_b7").all_fields]
-    b7_values = [f.int_value == 1 for f in layer.get_field("al_biq_b7").all_fields]
-    b6_values = [f.int_value == 1 for f in layer.get_field("al_biq_b6").all_fields]
-    b5_values = [f.int_value == 1 for f in layer.get_field("al_biq_b5").all_fields]
-    b4_values = [f.int_value == 1 for f in layer.get_field("al_biq_b4").all_fields]
-    b3_values = [f.int_value == 1 for f in layer.get_field("al_biq_b3").all_fields]
-    b2_values = [f.int_value == 1 for f in layer.get_field("al_biq_b2").all_fields]
-    b1_values = [f.int_value == 1 for f in layer.get_field("al_biq_b1").all_fields]
-    b0_values = [f.int_value == 1 for f in layer.get_field("al_biq_b0").all_fields]
+def BuildQualityParser(quality_field_prefix):
+    def parser_func(layer):
+        # parse list of quality bits for each point
+        qualitiy_bits_values = []
+        for i in range(8):
+            qualitiy_bits_values.append([f.int_value == 1 for f in layer.get_field(f"al_{quality_field_prefix}q_b{i}").all_fields])
 
-    qualitiy_bits_values = list(zip(b0_values, b1_values, b2_values, b3_values, b4_values, b5_values, b6_values, b7_values))
+        qualitiy_bits_values = list(zip(*qualitiy_bits_values))
 
-    point_flags = [_list_to_quality_obj(bits) for bits in qualitiy_bits_values]
+        return [_list_to_quality_obj(bits) for bits in qualitiy_bits_values]
 
-    points = []
-    for idx in range(len(values)):
-        points.append(DNP3Point(index=idx, value=values[idx], flags=point_flags[idx]))
+    return parser_func
 
-    return points
+def getBinaryValues(layer):
+    return [f.int_value == 1 for f in layer.get_field("al_biq_b7").all_fields]
 
-def AnalogPointParser(layer):
-    values = [int(f.show) for f in layer.get_field("al_ana_int").all_fields]
-    b7_values = [f.int_value == 1 for f in layer.get_field("al_aiq_b7").all_fields]
-    b6_values = [f.int_value == 1 for f in layer.get_field("al_aiq_b6").all_fields]
-    b5_values = [f.int_value == 1 for f in layer.get_field("al_aiq_b5").all_fields]
-    b4_values = [f.int_value == 1 for f in layer.get_field("al_aiq_b4").all_fields]
-    b3_values = [f.int_value == 1 for f in layer.get_field("al_aiq_b3").all_fields]
-    b2_values = [f.int_value == 1 for f in layer.get_field("al_aiq_b2").all_fields]
-    b1_values = [f.int_value == 1 for f in layer.get_field("al_aiq_b1").all_fields]
-    b0_values = [f.int_value == 1 for f in layer.get_field("al_aiq_b0").all_fields]
-
-    qualitiy_bits_values = list(
-        zip(b0_values, b1_values, b2_values, b3_values, b4_values, b5_values, b6_values, b7_values))
-
-    point_flags = [_list_to_quality_obj(bits) for bits in qualitiy_bits_values]
-
-    points = []
-    for idx in range(len(values)):
-        points.append(DNP3Point(index=idx, value=values[idx], flags=point_flags[idx]))
-
-    return points
+def getAnalogIntValues(layer):
+    return [int(f.show) for f in layer.get_field("al_ana_int").all_fields]
 
 def ParsePoints(group, var, layer):
+    parser = None
+    values = []
     match group:
         case 1 | 2:
-            return BinaryPointParser(layer)
-        case 32:
-            return AnalogPointParser(layer)
+            values = getBinaryValues(layer)
+            parser = BuildQualityParser("bi")
+        case 30 | 32:
+            values = getAnalogIntValues(layer)
+            parser = BuildQualityParser("ai")
         case _:
             return []
+
+    point_flags = parser(layer)
+
+    points = []
+    for idx in range(len(values)):
+        points.append(DNP3Point(index=idx, value=values[idx], flags=point_flags[idx]))
+
+    return points

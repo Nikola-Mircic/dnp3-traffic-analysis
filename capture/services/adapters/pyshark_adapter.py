@@ -5,10 +5,8 @@ from domain.models.dnp3_packet import FunctionCode, DataLinkHeader, ControlField
     IINFlags, DNP3Point, DNP3Object, DNP3Frame, Qualifier
 from services.adapters.pyshark_point_parsers import ParsePoints
 
-
 def _get_raw(layer, field, default: str):
     return str(getattr(layer, field, default))
-
 
 def _get_int(layer, field, default=0):
     try:
