@@ -3,7 +3,7 @@ from pydnp3 import opendnp3
 def printPoint(header_info:opendnp3.HeaderInfo, datatype):
     """
     Print a point data in format:
-     - "[EVENT/STATIC] data_type( gv ) -> index : value"
+     - "[EVENT/STATIC] data_type -> index : value"
     """
     def print_fnc(point):
         event_str = "EVENT" if header_info.isEventVariation else "STATIC"
