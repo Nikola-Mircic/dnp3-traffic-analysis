@@ -1,3 +1,5 @@
+import traceback
+
 from pyshark.packet.layers.xml_layer import XmlLayer
 
 from domain.intrefaces.packet_adapter import PacketAdapter
@@ -146,18 +148,42 @@ class PySharkAdapter(PacketAdapter):
             print("Points per object: {}".format(point_counts))
             print("Index values: {}".format(index_values))
 
-            objects = []
+            # Load all points and objects
+            objects: list[DNP3Object] = []
+            points: list[DNP3Point] = []
 
+            # Load all objects first without points
             for object_idx in range(len(gv_list)):
                 group = gv_list[object_idx][0]
                 variation = gv_list[object_idx][1]
                 qualifier = qualifiers[object_idx]
-                points = ParsePoints(group, variation, layer)
-                objects.append(DNP3Object(group=group, variation=variation, qualifier=qualifier, points=points))
+                objects.append(DNP3Object(group=group, variation=variation, qualifier=qualifier, points=[]))
+
+            # Load point data. Each index is set to -1 before linking with objects
+            object_idx = 0
+            while object_idx < len(objects):
+                points.extend(ParsePoints(objects[object_idx].group, objects[object_idx].variation, layer))
+                while sum(point_counts[0: object_idx+1]) < len(points):
+                    # We loaded points for both running and frozen counters
+                    object_idx += 1
+                object_idx += 1
+
+            # Assign each point to corresponding object and index
+            current_point = 0
+            for object_idx in range(len(objects)):
+                while point_counts[object_idx] > 0:
+                    points[current_point].index = index_values[current_point]
+                    objects[object_idx].points.append(points[current_point])
+                    point_counts[object_idx] -= 1
+                    current_point += 1
 
             return objects
 
+
         except Exception as e:
-            print(e)
+            print(f"Exception type: {type(e).__name__}")
+            print(f"Exception message: {e}")
+            print(f"Exception args: {e.args}")
+            print(traceback.format_exc())
 
         return []

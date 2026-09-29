@@ -7,9 +7,13 @@
  'al_ctrq_b7', 'al_ctrq_b6', 'al_ctrq_b5', 'al_ctrq_b4', 'al_ctrq_b3', 'al_ctrq_b2', 'al_ctrq_b1', 'al_ctrq_b0',
  'al_cnt'
  """
-import struct
-from socket import ntohl
+from pydnp3 import opendnp3
+
 from domain.models.dnp3_packet import PointFlags, DNP3Point
+
+PYSHARK_ANALOG_VALUE_FIELD = "al_ana_int"
+PYSHARK_BINARY_VALUE_FIELD = "al_biq_b7"
+PYSHARK_COUNTER_VALUE_FIELD = "al_cnt"
 
 def _list_to_quality_obj(val_list, binary=False, analog=False, counter=False):
     point = PointFlags(
@@ -56,28 +60,40 @@ def BuildQualityParser(quality_field_prefix):
     return parser_func
 
 def getBinaryValues(layer):
-    return [f.int_value == 1 for f in layer.get_field("al_biq_b7").all_fields]
+    return [f.int_value == 1 for f in layer.get_field(PYSHARK_BINARY_VALUE_FIELD).all_fields]
 
 def getAnalogIntValues(layer):
-    return [int(f.show) for f in layer.get_field("al_ana_int").all_fields]
+    return [int(f.show) for f in layer.get_field(PYSHARK_ANALOG_VALUE_FIELD).all_fields]
+
+def getCounterValues(layer):
+    return [int(f.show) for f in layer.get_field(PYSHARK_COUNTER_VALUE_FIELD).all_fields]
 
 def ParsePoints(group, var, layer):
     parser = None
     values = []
+
     match group:
-        case 1 | 2:
+        case 1 | 2: # Binary Inputs
             values = getBinaryValues(layer)
             parser = BuildQualityParser("bi")
-        case 30 | 32:
+        case 30 | 32: # Analog Inputs
             values = getAnalogIntValues(layer)
             parser = BuildQualityParser("ai")
+        case 20 | 22 | 21 | 23 :
+            values = getCounterValues(layer)
+            parser = BuildQualityParser("ctr")
         case _:
             return []
 
     point_flags = parser(layer)
 
+    gv_name = opendnp3.GroupVariationToString(opendnp3.GroupVariationFromType(group << 8 | var))
+    print("For group {}.{} {} found:".format(group, var, gv_name))
+    print(f" - {len(point_flags)} flags")
+    print(f" - {len(values)} values")
+
     points = []
     for idx in range(len(values)):
-        points.append(DNP3Point(index=idx, value=values[idx], flags=point_flags[idx]))
+        points.append(DNP3Point(index=-1, value=values[idx], flags=point_flags[idx]))
 
     return points
