@@ -64,6 +64,35 @@ class ControlField:
     fcv: bool
     function_code: int
 
+class Qualifier(IntEnum):
+    ALL_SSI_8  = 0x00
+    ALL_SSI_16 = 0x01
+    ALL_REQUEST = 0x06
+    COUNT_8 = 0x07
+    COUNT_16 = 0x08
+    COUNT_WITH_INDEX_8 = 0x17
+    COUNT_WITH_INDEX_16 = 0x28
+
+@dataclass
+class PointFlags:
+    """Class representing a point flags/quality bits"""
+    # Common for all point types
+    online: bool
+    restart: bool
+    comm_lost: bool
+    remote_forced: bool
+    local_forced: bool
+
+    # Flags for binary inputs - not including STATE flag since it is stored as value
+    chatter_filter: bool
+
+    # Flags for analog inputs
+    overrange: bool
+    ref_error: bool
+
+    # Flags for frozen/running counters
+    rollover: bool
+    discontinuity: bool
 
 @dataclass
 class DataLinkHeader:
@@ -102,7 +131,7 @@ class TransportHeader:
 class DNP3Point:
     index: int
     value: Any
-    flags: Optional[int] = None
+    flags: Optional[PointFlags] = None
     timestamp: Optional[datetime] = None
 
 
@@ -117,7 +146,7 @@ class DNP3Object:
     """
     group: int
     variation: int
-    qualifier: int
+    qualifier: Qualifier
     points: list[DNP3Point] = field(default_factory=list)
 
 

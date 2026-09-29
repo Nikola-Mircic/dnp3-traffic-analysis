@@ -1,5 +1,10 @@
+from pyshark.packet.layers.xml_layer import XmlLayer
+
 from domain.intrefaces.packet_adapter import PacketAdapter
-from domain.models.dnp3_packet import FunctionCode, DataLinkHeader, ControlField, TransportHeader, ApplicationHeader, IINFlags, DNP3Point, DNP3Object, DNP3Frame
+from domain.models.dnp3_packet import FunctionCode, DataLinkHeader, ControlField, TransportHeader, ApplicationHeader, \
+    IINFlags, DNP3Point, DNP3Object, DNP3Frame, Qualifier
+from services.adapters.pyshark_point_parsers import ParsePoints
+
 
 def _get_raw(layer, field, default: str):
     return str(getattr(layer, field, default))
@@ -14,6 +19,17 @@ def _get_int(layer, field, default=0):
 def _get_bool(layer, field):
     return _get_raw(layer, field, "False").lower() == "true"
 
+def _get_qualifier(prefix_val, range_val):
+    value = (prefix_val & 0x0F) << 4 | range_val & 0x0F
+    return Qualifier(value)
+
+def _parse_group_and_var(obj_field):
+    gv_value = int(obj_field.get_default_value(), 16)
+    group = gv_value >> 8 & 0xFF
+    var = gv_value & 0xFF
+
+    return group, var
+
 class PySharkAdapter(PacketAdapter):
 
     def adapt(self, raw_packet):
@@ -27,7 +43,7 @@ class PySharkAdapter(PacketAdapter):
             data_link=self._parse_data_link(dnp3_layer),
             transport=self._parse_transport(dnp3_layer),
             application=self._parse_application(dnp3_layer),
-            objects=[]
+            objects=self._parse_objects(dnp3_layer)
         )
 
     @staticmethod
@@ -102,3 +118,48 @@ class PySharkAdapter(PacketAdapter):
             function_code=FunctionCode(function_code),
             iin=iin,
         )
+
+    @staticmethod
+    def _parse_objects(layer: XmlLayer):
+        """
+            'al_fragments', 'al_fragment', 'al_fragment_count', 'al_fragment_reassembled_length',
+             'al_obj', 'al_objq_prefix', 'al_objq_range', 'al_range_quantity', 'al_index',
+             'al_biq_b7', 'al_biq_b6', 'al_biq_b5', 'al_biq_b4', 'al_biq_b3', 'al_biq_b2', 'al_biq_b1', 'al_biq_b0',
+             'al_aiq_b7', 'al_aiq_b6', 'al_aiq_b5', 'al_aiq_b4', 'al_aiq_b3', 'al_aiq_b2', 'al_aiq_b1', 'al_aiq_b0',
+             'al_ana_int',
+             'al_ctrq_b7', 'al_ctrq_b6', 'al_ctrq_b5', 'al_ctrq_b4', 'al_ctrq_b3', 'al_ctrq_b2', 'al_ctrq_b1', 'al_ctrq_b0',
+             'al_cnt'"""
+        try:
+            if not hasattr(layer, "al_obj"):
+                return []
+            # 'al_fragments', 'al_fragment', 'al_fragment_count', 'al_fragment_reassembled_length'
+            print(layer.field_names)
+            # List of groups and variations for each object
+            gv_list = list(map(lambda x: _parse_group_and_var(x), layer.get_field("al_obj").all_fields))
+            # Print groups and variations
+            print("Object gv: {}".format(list(map(lambda gv: str(gv[0])+"."+str(gv[1]), gv_list))))
+            prefix_values = map(lambda x: x.int_value, layer.get_field("al_objq_prefix").all_fields)
+            range_values = map(lambda x: x.int_value, layer.get_field("al_objq_range").all_fields)
+            qualifier_values = list(zip(prefix_values, range_values))
+            qualifiers = [_get_qualifier(x,y) for x,y in qualifier_values]
+            point_counts = list(map(lambda x: int(x.get_default_value()), layer.get_field("al_range_quantity").all_fields))
+            index_values = list(map(lambda x: int(x.get_default_value()), layer.get_field("al_index").all_fields))
+            print("Qualifiers: {}".format(qualifiers))
+            print("Points per object: {}".format(point_counts))
+            print("Index values: {}".format(index_values))
+
+            objects = []
+
+            for object_idx in range(len(gv_list)):
+                group = gv_list[object_idx][0]
+                variation = gv_list[object_idx][1]
+                qualifier = qualifiers[object_idx]
+                points = ParsePoints(group, variation, layer)
+                objects.append(DNP3Object(group=group, variation=variation, qualifier=qualifier, points=points))
+
+            return objects
+
+        except Exception as e:
+            print(e)
+
+        return []

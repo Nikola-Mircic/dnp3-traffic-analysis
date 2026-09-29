@@ -17,6 +17,7 @@ services:
 
   # Master's side-car for monitoring traffic outside docker network
   #tcpdump:
+
   #  image: nicolaka/netshoot
   #  network_mode: "service:master"
   #  command: tcpdump -U -i eth0 -w /captures/dnp3.pcap tcp port 20000

@@ -4,6 +4,7 @@ import signal
 import os
 
 from pydnp3 import opendnp3
+from pydnp3.opendnp3 import BinaryQuality, FrozenCounterQuality, Flags
 
 from channel import ChannelManager
 from config_builder import OutstationConfigBuilder
@@ -11,6 +12,14 @@ from outstation_handler import OutstationHandler
 from point_simulator import PointSimulator, CsvAnalogInputFunction, CsvCountersFunction
 
 csv_filepath = os.getenv("TURBINE_DATA", "turbines/turbine_1.csv")
+
+def bin_input_sim(app, index, cycle):
+    app.update(opendnp3.Binary(cycle % 2 == 1, opendnp3.Flags(BinaryQuality.ONLINE)), index)
+
+def fcounter_sim(app, index, cycle):
+    flag = opendnp3.Flags(FrozenCounterQuality.COMM_LOST)
+    flag.Set(FrozenCounterQuality.LOCAL_FORCED)
+    app.update(opendnp3.FrozenCounter(cycle, flag), index)
 
 def main():
     """The Outstation has been started from the command line. Keep the process alive to serve requests."""
@@ -22,7 +31,12 @@ def main():
     builder.set_local_addr(1)
     builder.set_remote_addr(2)
     # 3 analog inputs for 3 phases ( voltage )
-    builder.add_analog_inputs(3, opendnp3.PointClass.Class1)
+    builder.add_analog_inputs(2, opendnp3.PointClass.Class1)
+    builder.add_analog_inputs(1, opendnp3.PointClass.Class2)
+    builder.add_binary_inputs(2, opendnp3.PointClass.Class3)
+    builder.add_binary_outputs(2, opendnp3.PointClass.Class1)
+    builder.add_analog_outputs(1, opendnp3.PointClass.Class2)
+    builder.add_frozen_counters(2, opendnp3.PointClass.Class1)
     # 1 counter for total energy exported
     builder.add_counters(1, opendnp3.PointClass.Class1)
     config = builder.build()
@@ -35,6 +49,12 @@ def main():
     simulator.add_analog_input_function(0, CsvAnalogInputFunction(csv_filepath, "Voltage L1 / U (V)"))
     simulator.add_analog_input_function(1, CsvAnalogInputFunction(csv_filepath, "Voltage L2 / V (V)"))
     simulator.add_analog_input_function(2, CsvAnalogInputFunction(csv_filepath, "Voltage L3 / W (V)"))
+
+    simulator.add_binary_input_function(0, bin_input_sim)
+    simulator.add_binary_input_function(1, bin_input_sim)
+
+    simulator.add_frozen_counters_function(0, fcounter_sim)
+    simulator.add_frozen_counters_function(1, fcounter_sim)
 
     simulator.add_counters_function(0, CsvCountersFunction(csv_filepath, "Energy Export counter (kWh)"))
 
