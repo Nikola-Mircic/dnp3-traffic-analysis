@@ -135,15 +135,15 @@ class PySharkAdapter(PacketAdapter):
             # 'al_fragments', 'al_fragment', 'al_fragment_count', 'al_fragment_reassembled_length'
             print(layer.field_names)
             # List of groups and variations for each object
-            gv_list = list(map(lambda x: _parse_group_and_var(x), layer.get_field("al_obj").all_fields))
+            gv_list = [_parse_group_and_var(f) for f in layer.get_field("al_obj").all_fields]
             # Print groups and variations
-            print("Object gv: {}".format(list(map(lambda gv: str(gv[0])+"."+str(gv[1]), gv_list))))
-            prefix_values = map(lambda x: x.int_value, layer.get_field("al_objq_prefix").all_fields)
-            range_values = map(lambda x: x.int_value, layer.get_field("al_objq_range").all_fields)
+            print("Object gv: {}".format([f"{group}.{var}" for group, var in gv_list]))
+            prefix_values = [f.int_value for f in layer.get_field("al_objq_prefix").all_fields]
+            range_values = [f.int_value for f in layer.get_field("al_objq_range").all_fields]
             qualifier_values = list(zip(prefix_values, range_values))
             qualifiers = [_get_qualifier(x,y) for x,y in qualifier_values]
-            point_counts = list(map(lambda x: int(x.get_default_value()), layer.get_field("al_range_quantity").all_fields))
-            index_values = list(map(lambda x: int(x.get_default_value()), layer.get_field("al_index").all_fields))
+            point_counts = [int(f.get_default_value()) for f in layer.get_field("al_range_quantity").all_fields]
+            index_values = [int(f.get_default_value()) for f in layer.get_field("al_index").all_fields]
             print("Qualifiers: {}".format(qualifiers))
             print("Points per object: {}".format(point_counts))
             print("Index values: {}".format(index_values))

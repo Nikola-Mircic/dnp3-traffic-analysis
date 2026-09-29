@@ -49,19 +49,19 @@ def BinaryPointParser(layer):
     :return: values and flags as two separate lists
     """
     # parse list of quality bits for each point
-    values = list(map(lambda x: x.int_value == 1, layer.get_field("al_biq_b7").all_fields))
-    b7_values = map(lambda x: x.int_value == 1, layer.get_field("al_biq_b7").all_fields)
-    b6_values = map(lambda x: x.int_value == 1, layer.get_field("al_biq_b6").all_fields)
-    b5_values = map(lambda x: x.int_value == 1, layer.get_field("al_biq_b5").all_fields)
-    b4_values = map(lambda x: x.int_value == 1, layer.get_field("al_biq_b4").all_fields)
-    b3_values = map(lambda x: x.int_value == 1, layer.get_field("al_biq_b3").all_fields)
-    b2_values = map(lambda x: x.int_value == 1, layer.get_field("al_biq_b2").all_fields)
-    b1_values = map(lambda x: x.int_value == 1, layer.get_field("al_biq_b1").all_fields)
-    b0_values = map(lambda x: x.int_value == 1, layer.get_field("al_biq_b0").all_fields)
+    values = [f.int_value == 1 for f in layer.get_field("al_biq_b7").all_fields]
+    b7_values = [f.int_value == 1 for f in layer.get_field("al_biq_b7").all_fields]
+    b6_values = [f.int_value == 1 for f in layer.get_field("al_biq_b6").all_fields]
+    b5_values = [f.int_value == 1 for f in layer.get_field("al_biq_b5").all_fields]
+    b4_values = [f.int_value == 1 for f in layer.get_field("al_biq_b4").all_fields]
+    b3_values = [f.int_value == 1 for f in layer.get_field("al_biq_b3").all_fields]
+    b2_values = [f.int_value == 1 for f in layer.get_field("al_biq_b2").all_fields]
+    b1_values = [f.int_value == 1 for f in layer.get_field("al_biq_b1").all_fields]
+    b0_values = [f.int_value == 1 for f in layer.get_field("al_biq_b0").all_fields]
 
     qualitiy_bits_values = list(zip(b0_values, b1_values, b2_values, b3_values, b4_values, b5_values, b6_values, b7_values))
 
-    point_flags = list(map(_list_to_quality_obj, qualitiy_bits_values))
+    point_flags = [_list_to_quality_obj(bits) for bits in qualitiy_bits_values]
 
     points = []
     for idx in range(len(values)):
@@ -71,19 +71,19 @@ def BinaryPointParser(layer):
 
 def AnalogPointParser(layer):
     values = [int(f.show) for f in layer.get_field("al_ana_int").all_fields]
-    b7_values = map(lambda x: x.int_value == 1, layer.get_field("al_aiq_b7").all_fields)
-    b6_values = map(lambda x: x.int_value == 1, layer.get_field("al_aiq_b6").all_fields)
-    b5_values = map(lambda x: x.int_value == 1, layer.get_field("al_aiq_b5").all_fields)
-    b4_values = map(lambda x: x.int_value == 1, layer.get_field("al_aiq_b4").all_fields)
-    b3_values = map(lambda x: x.int_value == 1, layer.get_field("al_aiq_b3").all_fields)
-    b2_values = map(lambda x: x.int_value == 1, layer.get_field("al_aiq_b2").all_fields)
-    b1_values = map(lambda x: x.int_value == 1, layer.get_field("al_aiq_b1").all_fields)
-    b0_values = map(lambda x: x.int_value == 1, layer.get_field("al_aiq_b0").all_fields)
+    b7_values = [f.int_value == 1 for f in layer.get_field("al_aiq_b7").all_fields]
+    b6_values = [f.int_value == 1 for f in layer.get_field("al_aiq_b6").all_fields]
+    b5_values = [f.int_value == 1 for f in layer.get_field("al_aiq_b5").all_fields]
+    b4_values = [f.int_value == 1 for f in layer.get_field("al_aiq_b4").all_fields]
+    b3_values = [f.int_value == 1 for f in layer.get_field("al_aiq_b3").all_fields]
+    b2_values = [f.int_value == 1 for f in layer.get_field("al_aiq_b2").all_fields]
+    b1_values = [f.int_value == 1 for f in layer.get_field("al_aiq_b1").all_fields]
+    b0_values = [f.int_value == 1 for f in layer.get_field("al_aiq_b0").all_fields]
 
     qualitiy_bits_values = list(
         zip(b0_values, b1_values, b2_values, b3_values, b4_values, b5_values, b6_values, b7_values))
 
-    point_flags = list(map(_list_to_quality_obj, qualitiy_bits_values))
+    point_flags = [_list_to_quality_obj(bits) for bits in qualitiy_bits_values]
 
     points = []
     for idx in range(len(values)):
