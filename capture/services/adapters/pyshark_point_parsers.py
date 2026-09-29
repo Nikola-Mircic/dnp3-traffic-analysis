@@ -1,14 +1,3 @@
-"""
-'al_fragments', 'al_fragment', 'al_fragment_count', 'al_fragment_reassembled_length',
- 'al_obj', 'al_objq_prefix', 'al_objq_range', 'al_range_quantity', 'al_index',
- 'al_biq_b7', 'al_biq_b6', 'al_biq_b5', 'al_biq_b4', 'al_biq_b3', 'al_biq_b2', 'al_biq_b1', 'al_biq_b0',
- 'al_aiq_b7', 'al_aiq_b6', 'al_aiq_b5', 'al_aiq_b4', 'al_aiq_b3', 'al_aiq_b2', 'al_aiq_b1', 'al_aiq_b0',
- 'al_ana_int',
- 'al_ctrq_b7', 'al_ctrq_b6', 'al_ctrq_b5', 'al_ctrq_b4', 'al_ctrq_b3', 'al_ctrq_b2', 'al_ctrq_b1', 'al_ctrq_b0',
- 'al_cnt'
- """
-from pydnp3 import opendnp3
-
 from domain.models.dnp3_packet import PointFlags, DNP3Point
 
 PYSHARK_ANALOG_VALUE_FIELD = "al_ana_int"
@@ -86,11 +75,6 @@ def ParsePoints(group, var, layer):
             return []
 
     point_flags = parser(layer)
-
-    gv_name = opendnp3.GroupVariationToString(opendnp3.GroupVariationFromType(group << 8 | var))
-    print("For group {}.{} {} found:".format(group, var, gv_name))
-    print(f" - {len(point_flags)} flags")
-    print(f" - {len(values)} values")
 
     points = []
     for idx in range(len(values)):

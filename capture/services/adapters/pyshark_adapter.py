@@ -33,9 +33,6 @@ def _parse_group_and_var(obj_field):
 class PySharkAdapter(PacketAdapter):
 
     def adapt(self, raw_packet):
-        if not hasattr(raw_packet, "dnp3"):
-            return None
-
         dnp3_layer = raw_packet.dnp3
 
         return DNP3Frame(
@@ -132,8 +129,7 @@ class PySharkAdapter(PacketAdapter):
         try:
             if not hasattr(layer, "al_obj"):
                 return []
-            # 'al_fragments', 'al_fragment', 'al_fragment_count', 'al_fragment_reassembled_length'
-            print(layer.field_names)
+
             # List of groups and variations for each object
             gv_list = [_parse_group_and_var(f) for f in layer.get_field("al_obj").all_fields]
             # Print groups and variations

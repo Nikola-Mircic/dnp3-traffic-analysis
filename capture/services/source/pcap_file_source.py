@@ -17,6 +17,7 @@ class PcapFilePacketSource(PacketSource):
             use_json=True)
         try:
             for packet in capture:
-                yield packet
+                if hasattr(packet, "dnp3"):
+                    yield packet
         finally:
             capture.close()
