@@ -7,6 +7,8 @@
  'al_ctrq_b7', 'al_ctrq_b6', 'al_ctrq_b5', 'al_ctrq_b4', 'al_ctrq_b3', 'al_ctrq_b2', 'al_ctrq_b1', 'al_ctrq_b0',
  'al_cnt'
  """
+import struct
+from socket import ntohl
 from domain.models.dnp3_packet import PointFlags, DNP3Point
 
 def _list_to_quality_obj(val_list, binary=False, analog=False, counter=False):
@@ -61,7 +63,27 @@ def BinaryPointParser(layer):
 
     point_flags = list(map(_list_to_quality_obj, qualitiy_bits_values))
 
-    print("Parsed {} values and {} flags".format(len(values), len(point_flags)))
+    points = []
+    for idx in range(len(values)):
+        points.append(DNP3Point(index=idx, value=values[idx], flags=point_flags[idx]))
+
+    return points
+
+def AnalogPointParser(layer):
+    values = [int(f.show) for f in layer.get_field("al_ana_int").all_fields]
+    b7_values = map(lambda x: x.int_value == 1, layer.get_field("al_aiq_b7").all_fields)
+    b6_values = map(lambda x: x.int_value == 1, layer.get_field("al_aiq_b6").all_fields)
+    b5_values = map(lambda x: x.int_value == 1, layer.get_field("al_aiq_b5").all_fields)
+    b4_values = map(lambda x: x.int_value == 1, layer.get_field("al_aiq_b4").all_fields)
+    b3_values = map(lambda x: x.int_value == 1, layer.get_field("al_aiq_b3").all_fields)
+    b2_values = map(lambda x: x.int_value == 1, layer.get_field("al_aiq_b2").all_fields)
+    b1_values = map(lambda x: x.int_value == 1, layer.get_field("al_aiq_b1").all_fields)
+    b0_values = map(lambda x: x.int_value == 1, layer.get_field("al_aiq_b0").all_fields)
+
+    qualitiy_bits_values = list(
+        zip(b0_values, b1_values, b2_values, b3_values, b4_values, b5_values, b6_values, b7_values))
+
+    point_flags = list(map(_list_to_quality_obj, qualitiy_bits_values))
 
     points = []
     for idx in range(len(values)):
@@ -73,5 +95,7 @@ def ParsePoints(group, var, layer):
     match group:
         case 1 | 2:
             return BinaryPointParser(layer)
+        case 32:
+            return AnalogPointParser(layer)
         case _:
             return []
