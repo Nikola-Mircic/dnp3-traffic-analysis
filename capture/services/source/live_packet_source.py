@@ -3,7 +3,6 @@ import pyshark
 from domain.intrefaces.packet_source import PacketSource
 
 class LivePacketSource(PacketSource):
-    # TODO: Add packet filter
     def __init__(self,
                  interface,
                  display_filter="dnp3"):
