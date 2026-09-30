@@ -1,8 +1,12 @@
 import threading
+from time import time
+
 import pandas as pd
 from pydnp3 import opendnp3
-from pydnp3.opendnp3 import BinaryQuality, AnalogQuality, CounterQuality, FrozenCounterQuality
+from pydnp3.opendnp3 import BinaryQuality, AnalogQuality, CounterQuality, FrozenCounterQuality, DNPTime
 
+def now():
+    return DNPTime(int(time() * 1000))
 
 def CsvBinaryInputFunction(path, colname):
     print("Creating binary input function for {} [{}]".format(colname, path))
@@ -12,11 +16,11 @@ def CsvBinaryInputFunction(path, colname):
         raw = df[colname][cycles+1]
         if pd.isna(raw):
             print("--> NaN detected at {} -> using [{}]".format(colname, last["value"]))
-            app.update(opendnp3.Binary(last["value"], opendnp3.Flags(BinaryQuality.COMM_LOST)), index)
+            app.update(opendnp3.Binary(last["value"], opendnp3.Flags(BinaryQuality.COMM_LOST), now()), index)
         else:
             value = bool(raw)
             last["value"] = value
-            app.update(opendnp3.Binary(value), index)
+            app.update(opendnp3.Binary(value, opendnp3.Flags(BinaryQuality.ONLINE), now()), index)
 
     return function
 
@@ -29,11 +33,11 @@ def CsvAnalogInputFunction(path, colname):
         raw = df[colname][cycles+1]
         if pd.isna(raw):
             print("--> NaN detected at {} -> [{}]".format(colname, last["value"]))
-            app.update(opendnp3.Analog(last["value"], opendnp3.Flags(AnalogQuality.COMM_LOST)), index)
+            app.update(opendnp3.Analog(last["value"], opendnp3.Flags(AnalogQuality.COMM_LOST), now()), index)
         else:
             value = float(raw)
             last["value"] = value
-            app.update(opendnp3.Analog(value), index)
+            app.update(opendnp3.Analog(value, opendnp3.Flags(BinaryQuality.ONLINE), now()), index)
 
     return function
 
@@ -46,11 +50,11 @@ def CsvCountersFunction(path, colname):
         raw = df[colname][cycles+1]
         if pd.isna(raw):
             print("--> NaN detected at {} -> [{}]".format(colname, last["value"]))
-            app.update(opendnp3.Counter(last["value"], opendnp3.Flags(CounterQuality.COMM_LOST)), index)
+            app.update(opendnp3.Counter(last["value"], opendnp3.Flags(CounterQuality.COMM_LOST), now()), index)
         else:
             value = int(raw)
             last["value"] = value
-            app.update(opendnp3.Counter(value), index)
+            app.update(opendnp3.Counter(value, opendnp3.Flags(BinaryQuality.ONLINE), now()), index)
 
     return function
 
@@ -61,13 +65,13 @@ def CsvFrozenCountersFunction(path, colname):
     last = {"value": 0}
     def function(app, index, cycles):
         raw = df[colname][cycles+1]
-        print("--> NaN detected at {} -> [{}]".format(colname, last["value"]))
         if pd.isna(raw):
-            app.update(opendnp3.FrozenCounter(last["value"], opendnp3.Flags(FrozenCounterQuality.COMM_LOST)), index)
+            print("--> NaN detected at {} -> [{}]".format(colname, last["value"]))
+            app.update(opendnp3.FrozenCounter(last["value"], opendnp3.Flags(FrozenCounterQuality.COMM_LOST), now()), index)
         else:
             value = int(raw)
             last["value"] = value
-            app.update(opendnp3.FrozenCounter(value), index)
+            app.update(opendnp3.FrozenCounter(value, opendnp3.Flags(BinaryQuality.ONLINE), now()), index)
 
     return function
 
