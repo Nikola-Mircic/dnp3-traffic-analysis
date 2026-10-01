@@ -37,12 +37,12 @@ def _quality_to_str(quality: PointFlags|None):
     return ",".join(str_quality)
 
 def main():
-    file_source = PcapFilePacketSource("./dnp3.pcap", display_filter="dnp3")
+    file_source = PcapFilePacketSource("./dnp3.pcap")
     live_source = LivePacketSource("eth0")
 
     adapter = PySharkAdapter()
 
-    for packet in live_source.packets():
+    for packet in file_source.packets():
         result = adapter.adapt(packet)
         order_str = ""
         if result.transport.first:
@@ -52,7 +52,12 @@ def main():
         if result.transport.first and result.transport.final:
             order_str = "FIRST AND FINAL"
 
+        print("---")
         print("#{} {}".format(result.transport.sequence, order_str))
+        print("[{}] {} from {}/{}".format(result.captured_at,
+                                          result.application.function_code.name,
+                                          "MASTER" if result.data_link.control.dir else "OUTSTATION",
+                                          result.data_link.source))
         for obj in result.objects:
             group = obj.group
             variation = obj.variation
@@ -62,11 +67,8 @@ def main():
             for point in obj.points:
                 print(" - {}: {} {}".format(point.index, point.value, _quality_to_str(point.flags)))
 
+        print("---")
 
-        print("[{}] {} from {}/{}".format(result.captured_at,
-                                       result.application.function_code.name,
-                                       "MASTER" if result.data_link.control.dir else "OUTSTATION",
-                                       result.data_link.source))
 
 
 if __name__ == '__main__':

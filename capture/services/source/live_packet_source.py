@@ -3,7 +3,6 @@ import pyshark
 from domain.intrefaces.packet_source import PacketSource
 
 class LivePacketSource(PacketSource):
-    # TODO: Add packet filter
     def __init__(self,
                  interface,
                  display_filter="dnp3"):
@@ -20,7 +19,8 @@ class LivePacketSource(PacketSource):
 
         try:
             for packet in self.capture.sniff_continuously():
-                yield packet
+                if hasattr(packet, "dnp3"):
+                    yield packet
         finally:
             self.capture.close()
             self.capture = None

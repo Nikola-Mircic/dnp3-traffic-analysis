@@ -3,21 +3,21 @@ import traceback
 from pyshark.packet.layers.xml_layer import XmlLayer
 
 from domain.intrefaces.packet_adapter import PacketAdapter
-from domain.models.dnp3_packet import FunctionCode, DataLinkHeader, ControlField, TransportHeader, ApplicationHeader, \
-    IINFlags, DNP3Point, DNP3Object, DNP3Frame, Qualifier
+from domain.models.dnp3_packet import *
 from services.adapters.pyshark_point_parsers import ParsePoints
 
-def _get_raw(layer, field, default: str):
-    return str(getattr(layer, field, default))
-
-def _get_int(layer, field, default=0):
-    try:
-        return int(_get_raw(layer, field, "0"))
-    except ValueError:
+def _get_int(layer, field_name, default=0):
+    field_int = layer.get_field(field_name)
+    if field_int is None:
+        print(f"Field {field_name} not found in layer {layer}")
+        print(dir(layer))
         return default
+    field_int = field_int.main_field
+    return int(field_int.show)
 
-def _get_bool(layer, field):
-    return _get_raw(layer, field, "False").lower() == "true"
+def _get_bool(layer, field_name):
+    field_int = layer.get_field(field_name).main_field
+    return field_int.int_value == 1
 
 def _get_qualifier(prefix_val, range_val):
     value = (prefix_val & 0x0F) << 4 | range_val & 0x0F
@@ -33,9 +33,6 @@ def _parse_group_and_var(obj_field):
 class PySharkAdapter(PacketAdapter):
 
     def adapt(self, raw_packet):
-        if not hasattr(raw_packet, "dnp3"):
-            return None
-
         dnp3_layer = raw_packet.dnp3
 
         return DNP3Frame(
@@ -52,7 +49,6 @@ class PySharkAdapter(PacketAdapter):
 
     @staticmethod
     def _parse_data_link(layer):
-
         source = _get_int(layer, "src")
         destination = _get_int(layer, "dst")
 
@@ -61,7 +57,7 @@ class PySharkAdapter(PacketAdapter):
             primary=_get_bool(layer, "ctl_prm"),
             fcb=_get_bool(layer, "ctl_fcb"),
             fcv=_get_bool(layer, "ctl_fcv"),
-            function_code=_get_int(layer, "ctl_func"),
+            function_code=_get_int(layer, "ctl_prifunc"),
         )
 
         return DataLinkHeader(
@@ -121,43 +117,38 @@ class PySharkAdapter(PacketAdapter):
 
     @staticmethod
     def _parse_objects(layer: XmlLayer):
-        """
-            'al_fragments', 'al_fragment', 'al_fragment_count', 'al_fragment_reassembled_length',
-             'al_obj', 'al_objq_prefix', 'al_objq_range', 'al_range_quantity', 'al_index',
-             'al_biq_b7', 'al_biq_b6', 'al_biq_b5', 'al_biq_b4', 'al_biq_b3', 'al_biq_b2', 'al_biq_b1', 'al_biq_b0',
-             'al_aiq_b7', 'al_aiq_b6', 'al_aiq_b5', 'al_aiq_b4', 'al_aiq_b3', 'al_aiq_b2', 'al_aiq_b1', 'al_aiq_b0',
-             'al_ana_int',
-             'al_ctrq_b7', 'al_ctrq_b6', 'al_ctrq_b5', 'al_ctrq_b4', 'al_ctrq_b3', 'al_ctrq_b2', 'al_ctrq_b1', 'al_ctrq_b0',
-             'al_cnt'"""
         try:
             if not hasattr(layer, "al_obj"):
                 return []
-            # 'al_fragments', 'al_fragment', 'al_fragment_count', 'al_fragment_reassembled_length'
-            print(layer.field_names)
+
             # List of groups and variations for each object
             gv_list = [_parse_group_and_var(f) for f in layer.get_field("al_obj").all_fields]
             # Print groups and variations
-            print("Object gv: {}".format([f"{group}.{var}" for group, var in gv_list]))
+            # print("Object gv: {}".format([f"{group}.{var}" for group, var in gv_list]))
             prefix_values = [f.int_value for f in layer.get_field("al_objq_prefix").all_fields]
             range_values = [f.int_value for f in layer.get_field("al_objq_range").all_fields]
             qualifier_values = list(zip(prefix_values, range_values))
             qualifiers = [_get_qualifier(x,y) for x,y in qualifier_values]
-            point_counts = [int(f.get_default_value()) for f in layer.get_field("al_range_quantity").all_fields]
-            index_values = [int(f.get_default_value()) for f in layer.get_field("al_index").all_fields]
-            print("Qualifiers: {}".format(qualifiers))
-            print("Points per object: {}".format(point_counts))
-            print("Index values: {}".format(index_values))
-
-            # Load all points and objects
-            objects: list[DNP3Object] = []
-            points: list[DNP3Point] = []
 
             # Load all objects first without points
+            objects: list[DNP3Object] = []
             for object_idx in range(len(gv_list)):
                 group = gv_list[object_idx][0]
                 variation = gv_list[object_idx][1]
                 qualifier = qualifiers[object_idx]
                 objects.append(DNP3Object(group=group, variation=variation, qualifier=qualifier, points=[]))
+
+            if not hasattr(layer, "al_range_quantity"):
+                return objects
+
+            point_counts = [int(f.get_default_value()) for f in layer.get_field("al_range_quantity").all_fields]
+            index_values = [int(f.get_default_value()) for f in layer.get_field("al_index").all_fields]
+            #print("Qualifiers: {}".format(qualifiers))
+            #print("Points per object: {}".format(point_counts))
+            #print("Index values: {}".format(index_values))
+
+            # Load all points and objects
+            points: list[DNP3Point] = []
 
             # Load point data. Each index is set to -1 before linking with objects
             object_idx = 0

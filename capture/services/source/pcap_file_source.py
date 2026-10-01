@@ -11,12 +11,10 @@ class PcapFilePacketSource(PacketSource):
     def packets(self):
         capture = pyshark.FileCapture(
             self.file_path,
-            display_filter=self.display_filter,
-            include_raw=True,
-            use_ek=True,
-            use_json=True)
+            display_filter=self.display_filter,)
         try:
             for packet in capture:
-                yield packet
+                if hasattr(packet, "dnp3"):
+                    yield packet
         finally:
             capture.close()

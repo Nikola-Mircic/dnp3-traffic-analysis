@@ -2,6 +2,10 @@ from pydnp3 import opendnp3, asiodnp3, openpal
 
 from soe_handler import SOEHandler
 
+CLASS_0 = 1
+CLASS_1 = 2
+CLASS_2 = 4
+CLASS_3 = 8
 
 class Master(opendnp3.IMasterApplication):
     def __init__(self, master_name, channel, soe_handler = SOEHandler()):
@@ -26,9 +30,25 @@ class Master(opendnp3.IMasterApplication):
                                                   self,
                                                   self.stack_config)
 
-        self.scan = self._master_ptr.AddClassScan(opendnp3.ClassField().AllEventClasses(),
-                                                  openpal.TimeDuration().Seconds(2),
-                                                  opendnp3.TaskConfig().Default())
+        self.scan = self._master_ptr.AddClassScan(opendnp3.ClassField().AllClasses(),
+                                                     openpal.TimeDuration().Seconds(2),
+                                                     opendnp3.TaskConfig().Default())
+
+        # self.scan_c1 = self._master_ptr.AddClassScan(opendnp3.ClassField(CLASS_1),
+        #                                           openpal.TimeDuration().Seconds(2),
+        #                                           opendnp3.TaskConfig().Default())
+        #
+        # self.scan_c2 = self._master_ptr.AddClassScan(opendnp3.ClassField(CLASS_2),
+        #                                           openpal.TimeDuration().Seconds(5),
+        #                                           opendnp3.TaskConfig().Default())
+        #
+        # self.scan_c3 = self._master_ptr.AddClassScan(opendnp3.ClassField(CLASS_3),
+        #                                           openpal.TimeDuration().Seconds(10),
+        #                                           opendnp3.TaskConfig().Default())
+        #
+        # self.scan_integrity = self._master_ptr.AddClassScan(opendnp3.ClassField(CLASS_0 | CLASS_1 | CLASS_2 | CLASS_3),
+        #                                              openpal.TimeDuration().Seconds(60),
+        #                                              opendnp3.TaskConfig().Default())
 
         self._master_ptr.Enable()
 
