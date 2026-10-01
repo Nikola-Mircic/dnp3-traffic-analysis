@@ -1,0 +1,10 @@
+[package]
+name = "outstation"
+version = "0.1.0"
+edition = "2024"
+authors = ["Nikola Mircic"]
+
+[dependencies]
+channel = { version = "0.1.0", path = "../channel" }
+tokio = { version = "1.53.1", features = ["full"] }
+tracing-subscriber = "0.3.23"
