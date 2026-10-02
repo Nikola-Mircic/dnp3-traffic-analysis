@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use dnp3::app::{Listener, MaybeAsync};
 
-pub struct LogListener {
+ pub struct LogListener{
     name: String,
 }
 

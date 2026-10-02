@@ -8,3 +8,6 @@ authors = ["Nikola Mircic"]
 channel = { version = "0.1.0", path = "../channel" }
 tokio = { version = "1.53.1", features = ["full"] }
 tracing-subscriber = "0.3.23"
+tracing = "0.1.44"
+csv = "1.4.0"
+dotenvy = "0.15.7"
