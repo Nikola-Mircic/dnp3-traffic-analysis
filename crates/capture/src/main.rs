@@ -33,7 +33,11 @@ fn process_packets<T>(source: &mut T)
 where T: PacketSource {
     loop {
         match source.next_packet() {
-            Ok(packet) => println!("Captured {:?} bytes!", packet.len()),
+            Ok(packet) => {
+                let dnp3_start_idx = packet.windows(2).position(|pair| pair[0] == 0x05 && pair[1] == 0x64).unwrap_or(0);
+                let dnp3_slice = &packet[dnp3_start_idx..];
+                println!("Captured {:?} bytes: [{:?}, {:?}...]", packet.len(), dnp3_slice.get(0).unwrap(), dnp3_slice.get(1).unwrap())
+            }
             Err(CaptureError::PcapError(pcap::Error::TimeoutExpired)) => continue,
             Err(e) => { eprintln!("capture error: {:?}", e); break; }
         }
@@ -41,7 +45,6 @@ where T: PacketSource {
 }
 
 fn main() {
-
     let device = select_device();
     let name = device.desc.clone().unwrap();
 

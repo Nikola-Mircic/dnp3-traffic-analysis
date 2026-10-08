@@ -5,5 +5,5 @@ pub enum CaptureError{
     #[error("IO error: {0}")]
     IO(std::io::Error),
     #[error("Packet format error: {0}")]
-    FormatError(std::io::Error),
+    FormatError(String),
 }

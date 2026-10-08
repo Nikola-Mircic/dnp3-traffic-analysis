@@ -2,8 +2,10 @@ use std::fmt;
 
 use chrono::{DateTime, Utc};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum FunctionCode {
+    #[default]
+    Undefined,
     // Control
     Confirm,
     Read,
@@ -27,7 +29,6 @@ pub enum FunctionCode {
     // Response
     Response,
     UnsolicitedResponse,
-    Undefined,
 }
 
 impl FunctionCode {
@@ -78,6 +79,30 @@ pub struct IinFlags {
 }
 
 impl IinFlags {
+    pub fn from_u16(value: u16) -> Self {
+        let bit = |n: u8| value & (1 << n) != 0;
+
+        Self {
+            // first octet (IIN1)
+            broadcast: bit(0),
+            class_1_events: bit(1),
+            class_2_events: bit(2),
+            class_3_events: bit(3),
+            need_time: bit(4),
+            local_control: bit(5),
+            device_trouble: bit(6),
+            device_restart: bit(7),
+            // second octet (IIN2)
+            no_func_code_support: bit(8),
+            object_unknown: bit(9),
+            parameter_error: bit(10),
+            event_buffer_overflow: bit(11),
+            already_executing: bit(12),
+            config_corrupt: bit(13),
+            // bits 14 and 15 are reserved
+        }
+    }
+
     /// Names of the flags that are set (handy for logging).
     pub fn active(&self) -> Vec<&'static str> {
         [
@@ -104,13 +129,25 @@ impl IinFlags {
 }
 
 /// Control octet of the data link header.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct ControlField {
     pub dir: bool,
     pub primary: bool,
     pub fcb: bool,
     pub fcv: bool,
     pub function_code: u8,
+}
+
+impl ControlField {
+    pub fn from_u8(v: u8) -> Self {
+        ControlField{
+            dir: v & 0x80 == 1,
+            primary: v & 0x40 == 1,
+            fcb: v & 0x20 == 1,
+            fcv: v & 0x10 == 1,
+            function_code: v & 0xF
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -159,7 +196,7 @@ pub struct PointFlags {
     pub discontinuity: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct DataLinkHeader {
     pub source: u16,
     pub destination: u16,
@@ -167,7 +204,7 @@ pub struct DataLinkHeader {
     pub control: ControlField,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Clone, PartialEq, Eq, Debug)]
 pub struct TransportHeader {
     pub fir: bool,
     pub fin: bool,
@@ -231,7 +268,7 @@ pub struct Dnp3Object {
     pub points: Vec<Dnp3Point>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct ApplicationHeader {
     pub fir: bool,
     pub fin: bool,
@@ -243,11 +280,11 @@ pub struct ApplicationHeader {
 }
 
 /// The unit every component downstream of the adapter works with.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct Dnp3Frame {
     pub captured_at: DateTime<Utc>,
     pub data_link: DataLinkHeader,
-    pub transport: Option<TransportHeader>,
-    pub application: Option<ApplicationHeader>,
+    pub transport: TransportHeader,
+    pub application: ApplicationHeader,
     pub objects: Vec<Dnp3Object>,
 }
