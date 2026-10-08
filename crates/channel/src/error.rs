@@ -1,7 +1,7 @@
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("io error: {0}")]
+    #[error("IO Error: {0}")]
     Io(#[from] std::io::Error),
-    #[error("dnp3 error: {0}")]
+    #[error("DNP3 Error: {0}")]
     Dnp3(String),
 }

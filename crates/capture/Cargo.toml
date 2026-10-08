@@ -2,6 +2,8 @@
 name = "capture"
 version = "0.1.0"
 edition = "2024"
-authors = ["Nikola Mircic"]
 
 [dependencies]
+thiserror = "2.0.21"
+chrono = "0.4.45"
+pcap = {version = "2.5.0", features = ["capture-stream"]}
