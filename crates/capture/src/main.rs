@@ -36,23 +36,14 @@ fn select_device() -> Device {
 fn process_packets<S, P>(source: &mut S, processor: &P)
 where S: PacketSource, P: PacketProcessor {
     let adapter = PcapPacketAdapter{};
-    loop {
-        match source.next_packet() {
-            Ok(packet) => {
-                let dnp3_start_idx = packet.windows(2).position(|pair| pair[0] == 0x05 && pair[1] == 0x64).unwrap_or(0);
-                let dnp3_slice = &packet[dnp3_start_idx..];
-
-                let frame = adapter.adapt(dnp3_slice);
-                match frame {
-                    Ok(frame) => {
-                        processor.process_packet(&frame);
-                    },
-                    Err(CaptureError::NotDNP3Packet) => continue,
-                    Err(e) => {println!("Error: {:?}", e);},
-                }
-            }
-            Err(CaptureError::PcapError(pcap::Error::TimeoutExpired)) => continue,
-            Err(e) => { eprintln!("capture error: {:?}", e); break; }
+    for packet in source {
+        let frame = adapter.adapt(packet.as_slice());
+        match frame {
+            Ok(frame) => {
+                processor.process_packet(&frame);
+            },
+            Err(CaptureError::NotDNP3Packet) => continue,
+            Err(e) => {println!("Error: {:?}", e);},
         }
     }
 }

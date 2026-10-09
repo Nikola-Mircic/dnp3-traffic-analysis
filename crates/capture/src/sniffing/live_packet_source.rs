@@ -6,14 +6,18 @@ pub struct LivePacketSource {
     capture: Capture<Active>,
 }
 
+fn create_capture(device: Device) -> Capture<Active> {
+    Capture::from_device(device).unwrap()
+        .promisc(true)
+        .immediate_mode(true)
+        .timeout(50)
+        .open().unwrap()
+}
+
 impl LivePacketSource {
     pub fn default() -> Self{
         let device = Device::lookup().unwrap().unwrap();
-        let mut capture = Capture::from_device(device).unwrap()
-                                            .promisc(true)
-                                            .immediate_mode(true)
-                                            .timeout(50)
-                                            .open().unwrap();
+        let mut capture = create_capture(device);
         capture.filter("tcp port 20000", true).unwrap();
         LivePacketSource{
             capture
@@ -21,11 +25,7 @@ impl LivePacketSource {
     }
 
     pub fn from_dev(device: &Device) -> Self {
-        let mut capture = Capture::from_device(device.clone()).unwrap()
-                                                .promisc(true)
-                                                .immediate_mode(true)
-                                                .timeout(50)
-                                                .open().unwrap();
+        let mut capture = create_capture(device.clone());
         capture.filter("tcp port 20000", true).unwrap();
         LivePacketSource{
             capture
@@ -41,5 +41,19 @@ impl PacketSource for LivePacketSource {
             Ok(packet) => Ok(packet.data),
             Err(e) => Err(CaptureError::PcapError(e))
         }
+    }
+}
+
+impl Iterator for LivePacketSource {
+    type Item = Vec<u8>;
+    
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut packet = self.next_packet();
+
+        while packet.is_err() {
+            packet = self.next_packet();
+        }
+
+        Some(packet.unwrap().to_vec())
     }
 }
