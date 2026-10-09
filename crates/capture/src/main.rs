@@ -1,7 +1,9 @@
 use pcap::Device;
 use crate::domain::packet_adapter::PacketAdapter;
+use crate::domain::packet_processor::PacketProcessor;
 use crate::domain::packet_source::PacketSource;
 use crate::error::CaptureError;
+use crate::sniffing::console_processor::ConsoleProcessor;
 use crate::sniffing::live_packet_source::LivePacketSource;
 use crate::sniffing::packet_adapter::PcapPacketAdapter;
 
@@ -31,8 +33,8 @@ fn select_device() -> Device {
     devices.get(selected).unwrap().clone()
 }
 
-fn process_packets<T>(source: &mut T)
-where T: PacketSource {
+fn process_packets<S, P>(source: &mut S, processor: &P)
+where S: PacketSource, P: PacketProcessor {
     let adapter = PcapPacketAdapter{};
     loop {
         match source.next_packet() {
@@ -40,11 +42,10 @@ where T: PacketSource {
                 let dnp3_start_idx = packet.windows(2).position(|pair| pair[0] == 0x05 && pair[1] == 0x64).unwrap_or(0);
                 let dnp3_slice = &packet[dnp3_start_idx..];
 
-                println!("Adapting frame of: {:?} bytes", dnp3_slice.len());
                 let frame = adapter.adapt(dnp3_slice);
                 match frame {
                     Ok(frame) => {
-                        println!("Adapted frame: {:?}", frame);
+                        processor.process_packet(&frame);
                     },
 
                     Err(e) => {println!("Error: {:?}", e);},
@@ -64,5 +65,7 @@ fn main() {
 
     let mut source = LivePacketSource::from_dev(&device);
 
-    process_packets(&mut source);
+    let processor = ConsoleProcessor;
+
+    process_packets(&mut source, &processor);
 }
