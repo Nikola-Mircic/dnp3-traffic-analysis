@@ -1,7 +1,9 @@
 use pcap::Device;
+use crate::domain::packet_adapter::PacketAdapter;
 use crate::domain::packet_source::PacketSource;
 use crate::error::CaptureError;
 use crate::sniffing::live_packet_source::LivePacketSource;
+use crate::sniffing::packet_adapter::PcapPacketAdapter;
 
 mod domain;
 mod sniffing;
@@ -31,12 +33,22 @@ fn select_device() -> Device {
 
 fn process_packets<T>(source: &mut T)
 where T: PacketSource {
+    let adapter = PcapPacketAdapter{};
     loop {
         match source.next_packet() {
             Ok(packet) => {
                 let dnp3_start_idx = packet.windows(2).position(|pair| pair[0] == 0x05 && pair[1] == 0x64).unwrap_or(0);
                 let dnp3_slice = &packet[dnp3_start_idx..];
-                println!("Captured {:?} bytes: [{:?}, {:?}...]", packet.len(), dnp3_slice.get(0).unwrap(), dnp3_slice.get(1).unwrap())
+
+                println!("Adapting frame of: {:?} bytes", dnp3_slice.len());
+                let frame = adapter.adapt(dnp3_slice);
+                match frame {
+                    Ok(frame) => {
+                        println!("Adapted frame: {:?}", frame);
+                    },
+
+                    Err(e) => {println!("Error: {:?}", e);},
+                }
             }
             Err(CaptureError::PcapError(pcap::Error::TimeoutExpired)) => continue,
             Err(e) => { eprintln!("capture error: {:?}", e); break; }

@@ -4,9 +4,9 @@ use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum FunctionCode {
-    #[default]
-    Undefined,
+    Undefined(u8),
     // Control
+    #[default]
     Confirm,
     Read,
     Write,
@@ -52,7 +52,7 @@ impl FunctionCode {
             0x16 => Self::AssignClass,
             0x81 => Self::Response,
             0x82 => Self::UnsolicitedResponse,
-            _ => Self::Undefined,
+            _ => Self::Undefined(v),
         }
     }
 }
@@ -141,40 +141,32 @@ pub struct ControlField {
 impl ControlField {
     pub fn from_u8(v: u8) -> Self {
         ControlField{
-            dir: v & 0x80 == 1,
-            primary: v & 0x40 == 1,
-            fcb: v & 0x20 == 1,
-            fcv: v & 0x10 == 1,
+            dir: v & 0x80 != 0,
+            primary: v & 0x40 != 0,
+            fcb: v & 0x20 != 0,
+            fcv: v & 0x10 != 0,
             function_code: v & 0xF
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Qualifier {
-    StartStop8,       // 0x00
-    StartStop16,      // 0x01
+    StartStop8(u8, u8),       // 0x00
+    StartStop16(u16, u16),      // 0x01
+    #[default]
     AllObjects,       // 0x06
-    Count8,           // 0x07
-    Count16,          // 0x08
-    CountWithIndex8,  // 0x17
-    CountWithIndex16, // 0x28
+    Count8(u8),           // 0x07
+    Count16(u16),          // 0x08
+    CountWithIndex8(u8),  // 0x17
+    CountWithIndex16(u16), // 0x28
     Other(u8),
 }
 
-impl Qualifier {
-    pub fn from_u8(v: u8) -> Self {
-        match v {
-            0x00 => Self::StartStop8,
-            0x01 => Self::StartStop16,
-            0x06 => Self::AllObjects,
-            0x07 => Self::Count8,
-            0x08 => Self::Count16,
-            0x17 => Self::CountWithIndex8,
-            0x28 => Self::CountWithIndex16,
-            other => Self::Other(other),
-        }
-    }
+pub enum PointType {
+    Binary,
+    Counter,
+    Analog
 }
 
 /// Point quality bits. Which of these are meaningful depends on the point type.
@@ -188,12 +180,49 @@ pub struct PointFlags {
     pub local_forced: bool,
     // binary inputs (STATE is stored as the value)
     pub chatter_filter: bool,
+    pub state: bool,
     // analog inputs
     pub overrange: bool,
     pub ref_error: bool,
     // counters / frozen counters
     pub rollover: bool,
     pub discontinuity: bool,
+}
+
+impl PointFlags{
+    pub fn from_u8(value: u8, point_type: &PointType) -> Self {
+        let bit = |n: u8| value & (1 << n) != 0;
+
+        // common bits 0..=4
+        let mut flags = Self {
+            online: bit(0),
+            restart: bit(1),
+            comm_lost: bit(2),
+            remote_forced: bit(3),
+            local_forced: bit(4),
+            ..Self::default()
+        };
+
+        match point_type {
+            PointType::Binary => {
+                flags.chatter_filter = bit(5);
+                // bit 6 reserved
+                flags.state = bit(7);
+            }
+            PointType::Analog => {
+                flags.overrange = bit(5);
+                flags.ref_error = bit(6);
+                // bit 7 reserved
+            }
+            PointType::Counter => {
+                flags.rollover = bit(5);
+                flags.discontinuity = bit(6);
+                // bit 7 reserved
+            }
+        }
+
+        flags
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -221,8 +250,9 @@ pub struct Crob {
 }
 
 /// Replaces Python's `value: Any`.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub enum PointValue {
+    #[default]
     None, // object carries no data (e.g. a read request)
     Bool(bool),
     Int(i32),
@@ -252,7 +282,7 @@ impl fmt::Display for PointValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct Dnp3Point {
     pub index: u32,
     pub value: PointValue,
@@ -260,7 +290,7 @@ pub struct Dnp3Point {
     pub timestamp: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Default, Clone, PartialEq, Debug)]
 pub struct Dnp3Object {
     pub group: u8,
     pub variation: u8,
