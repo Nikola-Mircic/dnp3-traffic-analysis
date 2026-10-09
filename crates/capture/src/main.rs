@@ -47,7 +47,7 @@ where S: PacketSource, P: PacketProcessor {
                     Ok(frame) => {
                         processor.process_packet(&frame);
                     },
-
+                    Err(CaptureError::NotDNP3Packet) => continue,
                     Err(e) => {println!("Error: {:?}", e);},
                 }
             }

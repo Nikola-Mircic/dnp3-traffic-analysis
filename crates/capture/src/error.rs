@@ -6,4 +6,6 @@ pub enum CaptureError{
     IO(std::io::Error),
     #[error("Packet format error: {0}")]
     FormatError(String),
+    #[error("Not a DNP3 packet")]
+    NotDNP3Packet,
 }

@@ -27,7 +27,7 @@ pub fn strip_crcs(raw: &[u8]) -> Result<Vec<u8>, CaptureError> {
     const BLOCK_DATA: usize = 16; // user data comes in 16-byte blocks, each followed by a CRC
 
     if raw.len() < HEADER_LEN || raw[..2] != [0x05, 0x64] {
-        return Err(CaptureError::FormatError("Not a DNP3 link frame".to_string()));
+        return Err(CaptureError::NotDNP3Packet);
     }
 
     // Header CRC
