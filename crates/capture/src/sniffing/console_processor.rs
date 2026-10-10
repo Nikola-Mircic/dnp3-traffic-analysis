@@ -14,7 +14,14 @@ impl PacketProcessor for ConsoleProcessor {
         for object in &frame.objects {
             println!(" - Group and variation: {:?}.{:?}", object.group, object.variation);
             for point in &object.points {
-                println!("\t - {:?}: {:?}", point.index, point.value);
+                print!("\t - {:?}: {:?}", point.index, point.value);
+                if point.flags.is_some() {
+                    print!(" {:?}", point.flags.as_ref().unwrap().active());
+                }
+                if point.timestamp.is_some() {
+                    print!(" {:?}", point.timestamp.as_ref().unwrap());
+                }
+                println!();
             }
         }
     }

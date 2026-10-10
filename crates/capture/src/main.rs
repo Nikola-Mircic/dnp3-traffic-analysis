@@ -50,13 +50,13 @@ where S: PacketSource, P: PacketProcessor {
 }
 
 fn main() {
-    // let device = select_device();
-    // let name = device.desc.clone().unwrap();
-    //
-    // println!("Using device: {:?}", name);
+    let device = select_device();
+    let name = device.desc.clone().unwrap();
 
-    //let mut source = LivePacketSource::from_dev(&device);
-    let mut source = FilePacketSource::new("./crates/capture/dnp3.pcap");
+    println!("Using device: {:?}", name);
+
+    let mut source = LivePacketSource::from_dev(&device);
+    //let mut source = FilePacketSource::new("./crates/capture/dnp3.pcap");
 
     let processor = ConsoleProcessor;
 

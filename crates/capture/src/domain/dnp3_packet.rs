@@ -223,6 +223,27 @@ impl PointFlags{
 
         flags
     }
+
+    /// Names of the flags that are set (handy for logging).
+    pub fn active(&self) -> Vec<&'static str> {
+        [
+            (self.online, "online"),
+            (self.restart, "restart"),
+            (self.comm_lost, "comm lost"),
+            (self.remote_forced, "remote forced"),
+            (self.local_forced, "local forced"),
+            (self.chatter_filter, "chatter filter"),
+            (self.state, "state"),
+            (self.overrange, "overrange"),
+            (self.ref_error, "reference error"),
+            (self.rollover, "rollover"),
+            (self.discontinuity, "discontinuity"),
+        ]
+            .into_iter()
+            .filter(|(on, _)| *on)
+            .map(|(_, name)| name)
+            .collect()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
