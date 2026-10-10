@@ -4,6 +4,7 @@ use crate::domain::packet_processor::PacketProcessor;
 use crate::domain::packet_source::PacketSource;
 use crate::error::CaptureError;
 use crate::sniffing::console_processor::ConsoleProcessor;
+use crate::sniffing::file_packet_source::FilePacketSource;
 use crate::sniffing::live_packet_source::LivePacketSource;
 use crate::sniffing::packet_adapter::PcapPacketAdapter;
 
@@ -49,12 +50,13 @@ where S: PacketSource, P: PacketProcessor {
 }
 
 fn main() {
-    let device = select_device();
-    let name = device.desc.clone().unwrap();
+    // let device = select_device();
+    // let name = device.desc.clone().unwrap();
+    //
+    // println!("Using device: {:?}", name);
 
-    println!("Using device: {:?}", name);
-
-    let mut source = LivePacketSource::from_dev(&device);
+    //let mut source = LivePacketSource::from_dev(&device);
+    let mut source = FilePacketSource::new("./crates/capture/dnp3.pcap");
 
     let processor = ConsoleProcessor;
 

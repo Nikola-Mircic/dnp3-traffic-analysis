@@ -193,6 +193,11 @@ fn parse_objects(reader: &mut BufferReader) -> Vec<Dnp3Object> {
             _ => Qualifier::Other(qualifier_val),
         };
 
+        if object.qualifier == Qualifier::AllObjects {
+            objects.push(object);
+            continue;
+        }
+
         let point_info = PointLayout::from_gv(object.group, object.variation);
 
         match point_info {

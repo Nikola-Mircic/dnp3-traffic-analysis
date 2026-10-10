@@ -51,6 +51,7 @@ impl PointLayout {
             (30, 2) => Ok(PointLayout::new(ValueType::Int16, PointType::Analog, true, false)),
             (30, 5) => Ok(PointLayout::new(ValueType::Float32, PointType::Analog, true, false)),
             // Analog input events
+            (32, 1) => Ok(PointLayout::new(ValueType::Int32, PointType::Analog, true, false)),
             (32, 3) => Ok(PointLayout::new(ValueType::Int32, PointType::Analog, true, true)),
             (32, 4) => Ok(PointLayout::new(ValueType::Int16, PointType::Analog, true, true)),
             (32, 7) => Ok(PointLayout::new(ValueType::Float32, PointType::Analog, true, true)),
