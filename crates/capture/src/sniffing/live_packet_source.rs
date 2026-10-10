@@ -7,18 +7,21 @@ pub struct LivePacketSource {
 }
 
 fn create_capture(device: Device) -> Capture<Active> {
-    Capture::from_device(device).unwrap()
-        .promisc(true)
-        .immediate_mode(true)
-        .timeout(50)
-        .open().unwrap()
+    let mut capture = Capture::from_device(device).unwrap()
+                                        .promisc(true)
+                                        .immediate_mode(true)
+                                        .timeout(50)
+                                        .open().unwrap();
+
+    capture.filter("tcp port 20000", true).unwrap();
+    capture
 }
 
 impl LivePacketSource {
     pub fn default() -> Self{
         let device = Device::lookup().unwrap().unwrap();
         let mut capture = create_capture(device);
-        capture.filter("tcp port 20000", true).unwrap();
+
         LivePacketSource{
             capture
         }
@@ -26,7 +29,7 @@ impl LivePacketSource {
 
     pub fn from_dev(device: &Device) -> Self {
         let mut capture = create_capture(device.clone());
-        capture.filter("tcp port 20000", true).unwrap();
+
         LivePacketSource{
             capture
         }
