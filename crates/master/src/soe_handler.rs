@@ -21,6 +21,7 @@ fn print_points<T>(
     }
 }
 
+
 impl ReadHandler for SoeHandler {
     fn handle_binary_input(
         &mut self,
@@ -38,22 +39,6 @@ impl ReadHandler for SoeHandler {
         print_points(&info, iter, |p| p.value.to_string());
     }
 
-    fn handle_analog_input(
-        &mut self,
-        info: HeaderInfo,
-        iter: &mut dyn Iterator<Item = (AnalogInput, u16)>,
-    ) {
-        print_points(&info, iter, |p| p.value.to_string());
-    }
-
-    fn handle_analog_output_status(
-        &mut self,
-        info: HeaderInfo,
-        iter: &mut dyn Iterator<Item = (AnalogOutputStatus, u16)>,
-    ) {
-        print_points(&info, iter, |p| p.value.to_string());
-    }
-
     fn handle_counter(
         &mut self,
         info: HeaderInfo,
@@ -66,6 +51,22 @@ impl ReadHandler for SoeHandler {
         &mut self,
         info: HeaderInfo,
         iter: &mut dyn Iterator<Item = (FrozenCounter, u16)>,
+    ) {
+        print_points(&info, iter, |p| p.value.to_string());
+    }
+
+    fn handle_analog_input(
+        &mut self,
+        info: HeaderInfo,
+        iter: &mut dyn Iterator<Item = (AnalogInput, u16)>,
+    ) {
+        print_points(&info, iter, |p| p.value.to_string());
+    }
+
+    fn handle_analog_output_status(
+        &mut self,
+        info: HeaderInfo,
+        iter: &mut dyn Iterator<Item = (AnalogOutputStatus, u16)>,
     ) {
         print_points(&info, iter, |p| p.value.to_string());
     }

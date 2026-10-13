@@ -2,7 +2,6 @@ use std::time::Duration;
 
 use channel::dnp3::app::control::*;
 use channel::dnp3::app::measurement::*;
-use channel::dnp3::app::*;
 use channel::dnp3::outstation::database::*;
 use channel::dnp3::outstation::*;
 

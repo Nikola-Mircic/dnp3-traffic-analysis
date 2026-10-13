@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use channel::client::ClientChannel;
 use channel::dnp3::link::EndpointAddress;
-use channel::dnp3::master::{Classes, MasterChannelConfig, ReadRequest};
+use channel::dnp3::master::{Classes, EventClasses, MasterChannelConfig, ReadRequest};
 
 use master::{association_config, NoopAssociationHandler, NoopAssociationInformation};
 use soe_handler::SoeHandler;
@@ -38,15 +38,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .await?;
 
-    // class scan of all classes every 2 seconds
+    // class scan of all event classes every 2 seconds
     let _poll = association
-        .add_poll(ReadRequest::ClassScan(Classes::all()), Duration::from_secs(2))
+        .add_poll(ReadRequest::ClassScan(Classes::new(false, EventClasses::all())), Duration::from_secs(2))
         .await?;
 
     client.enable().await?;
     println!("Initialization complete. Polling data.");
 
-    tokio::signal::ctrl_c().await?;
+
+    let input =
+
     println!("Exiting...");
     Ok(()) // dropping `client` shuts the channel down
 }

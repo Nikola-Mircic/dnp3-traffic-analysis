@@ -8,10 +8,12 @@ use tokio::task::JoinHandle;
 
 use crate::util::now;
 
-pub type BinaryFn = Box<dyn FnMut(u64) -> BinaryInput + Send>;
-pub type AnalogFn = Box<dyn FnMut(u64) -> AnalogInput + Send>;
-pub type CounterFn = Box<dyn FnMut(u64) -> Counter + Send>;
-pub type FrozenCounterFn = Box<dyn FnMut(u64) -> FrozenCounter + Send>;
+type SimulatorFn<T> = Box<dyn FnMut(u64) -> T + Send>;
+
+pub type BinaryFn = SimulatorFn<BinaryInput>;
+pub type AnalogFn = SimulatorFn<AnalogInput>;
+pub type CounterFn = SimulatorFn<Counter>;
+pub type FrozenCounterFn = SimulatorFn<FrozenCounter>;
 
 type BoxError = Box<dyn std::error::Error>;
 
@@ -51,7 +53,6 @@ fn csv_source(path: &str, column: &str) -> Result<CsvSource, BoxError> {
     let mut last = 0.0;
 
     Ok(Box::new(move |cycle: u64| {
-        // wraps around at end of file (the Python version would raise IndexError)
         match values[(cycle as usize) % values.len()] {
             Some(v) => {
                 last = v;
@@ -66,14 +67,15 @@ fn csv_source(path: &str, column: &str) -> Result<CsvSource, BoxError> {
 }
 
 fn quality(valid: bool) -> Flags {
-    if valid { Flags::ONLINE } else { Flags::COMM_LOST }
+    if valid { Flags::ONLINE } else { Flags::COMM_LOST | Flags::LOCAL_FORCED}
 }
 
 pub fn csv_analog(path: &str, column: &str) -> Result<AnalogFn, BoxError> {
     let mut src = csv_source(path, column)?;
     Ok(Box::new(move |cycle| {
-        let (v, ok) = src(cycle);
-        AnalogInput::new(v, quality(ok), now())
+        let (v, valid) = src(cycle);
+
+        AnalogInput::new(v, quality(valid), now())
     }))
 }
 
@@ -133,14 +135,13 @@ impl PointSimulator {
         self.frozen_counters.push((index, f));
     }
 
-    /// Spawns the simulation loop. Must be called inside the tokio runtime.
     pub fn start(mut self) -> SimulatorHandle {
         let (stop_tx, mut stop_rx) = watch::channel(false);
 
         let task = tokio::spawn(async move {
             let mut ticker = tokio::time::interval(self.interval);
             ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
-            ticker.tick().await; // first tick fires immediately; Python waited one interval first
+            ticker.tick().await;
 
             let mut cycle: u64 = 0;
             loop {
