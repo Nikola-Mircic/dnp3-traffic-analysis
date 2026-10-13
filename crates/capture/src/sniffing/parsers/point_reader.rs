@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
-use crate::domain::dnp3_packet::{Dnp3Point, PointFlags, PointType, PointValue};
+use crate::domain::dnp3_packet::{Dnp3Point, PointValue};
+use crate::domain::enums::{PointType, PointFlags};
 use crate::error::CaptureError;
 use crate::sniffing::buffer_reader::BufferReader;
 pub enum ValueType{

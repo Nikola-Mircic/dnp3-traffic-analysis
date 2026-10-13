@@ -1,4 +1,5 @@
-use crate::domain::dnp3_packet::{ApplicationHeader, ControlField, DataLinkHeader, Dnp3Frame, Dnp3Object, Dnp3Point, FunctionCode, IinFlags, Qualifier, TransportHeader};
+use crate::domain::dnp3_packet::*;
+use crate::domain::enums::*;
 use crate::domain::packet_adapter::PacketAdapter;
 use crate::error::CaptureError;
 use crate::sniffing::buffer_reader::BufferReader;

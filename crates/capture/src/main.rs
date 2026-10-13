@@ -4,7 +4,6 @@ use crate::domain::packet_processor::PacketProcessor;
 use crate::domain::packet_source::PacketSource;
 use crate::error::CaptureError;
 use crate::sniffing::console_processor::ConsoleProcessor;
-use crate::sniffing::file_packet_source::FilePacketSource;
 use crate::sniffing::live_packet_source::LivePacketSource;
 use crate::sniffing::packet_adapter::PcapPacketAdapter;
 
