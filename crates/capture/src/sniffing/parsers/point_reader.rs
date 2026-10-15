@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use crate::domain::dnp3_packet::{Dnp3Point, PointValue};
+use crate::domain::dnp3_packet::{Crob, Dnp3Point, PointValue};
 use crate::domain::enums::{PointType, PointFlags};
 use crate::error::CaptureError;
 use crate::sniffing::buffer_reader::BufferReader;
@@ -8,6 +8,7 @@ pub enum ValueType{
     Int16,
     Int32,
     Float32,
+    Crob
 }
 
 pub struct PointLayout {
@@ -28,7 +29,7 @@ impl PointLayout {
             (1, 2) => Ok(PointLayout::new(ValueType::State, PointType::Binary, true, false)),
             (2, 1) => Ok(PointLayout::new(ValueType::State, PointType::Binary, true, false)),
             (2, 2) => Ok(PointLayout::new(ValueType::State, PointType::Binary, true, true)),
-            (10, 2) => Ok(PointLayout::new(ValueType::State, PointType::Binary, true, false)),
+            (10, 2) => Ok(PointLayout::new(ValueType::State, PointType::BinaryOutput, true, false)),
             // Supported counter static groups and variations
             (20, 1) => Ok(PointLayout::new(ValueType::Int32, PointType::Counter, true, false)),
             (20, 2) => Ok(PointLayout::new(ValueType::Int16, PointType::Counter, true, false)),
@@ -56,6 +57,11 @@ impl PointLayout {
             (32, 3) => Ok(PointLayout::new(ValueType::Int32, PointType::Analog, true, true)),
             (32, 4) => Ok(PointLayout::new(ValueType::Int16, PointType::Analog, true, true)),
             (32, 7) => Ok(PointLayout::new(ValueType::Float32, PointType::Analog, true, true)),
+            // Binary output events
+            (11, 1) => Ok(PointLayout::new(ValueType::State, PointType::BinaryOutput, true, false)),
+            (11, 2) => Ok(PointLayout::new(ValueType::State, PointType::BinaryOutput, true, true)),
+            // Binary output command (CROB)
+            (12, 1) => Ok(PointLayout::new(ValueType::Crob, PointType::BinaryOutput, false, false)),
             _ => Err(CaptureError::FormatError(format!("Unsupported group and variation: {group}.{var}"))),
         }
     }
@@ -83,6 +89,13 @@ pub fn read_point(index: u32, point_info: &PointLayout, reader: &mut BufferReade
         ValueType::Int16 => PointValue::Int(reader.u16() as i32),
         ValueType::Int32 => PointValue::Int(reader.u32() as i32),
         ValueType::Float32 => PointValue::Float(f32::from_bits(reader.u32())),
+        ValueType::Crob => PointValue::Crob(Crob {
+            code: reader.u8(),
+            count: reader.u8(),
+            on_time_ms: reader.u32(),
+            off_time_ms: reader.u32(),
+            status: reader.u8(),
+        }),
     };
 
     if point_info.include_time {

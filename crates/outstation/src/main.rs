@@ -43,7 +43,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_analog_inputs(2, Some(EventClass::Class1))
         .add_analog_inputs(1, Some(EventClass::Class2))
         //.add_binary_inputs(2, Some(EventClass::Class3))
-        //.add_binary_outputs(2, Some(EventClass::Class1))
+        .add_binary_outputs(1, Some(EventClass::Class1))
         //.add_analog_outputs(1, Some(EventClass::Class2))
         //.add_frozen_counters(2, Some(EventClass::Class1))
         .add_counters(1, Some(EventClass::Class1));

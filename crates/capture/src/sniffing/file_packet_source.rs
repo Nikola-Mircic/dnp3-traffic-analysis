@@ -1,5 +1,5 @@
 use std::path::Path;
-use pcap::{Active, Capture, Device, Offline};
+use pcap::{Capture, Offline};
 use crate::domain::packet_source::PacketSource;
 use crate::error::CaptureError;
 
@@ -17,7 +17,7 @@ fn create_capture(path: &str) -> Capture<Offline> {
 
 impl FilePacketSource {
     pub fn new(path: &str) -> FilePacketSource {
-        let mut capture = create_capture(path);
+        let capture = create_capture(path);
 
         FilePacketSource {
             capture

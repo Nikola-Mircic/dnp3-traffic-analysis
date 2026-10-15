@@ -20,7 +20,7 @@ fn create_capture(device: Device) -> Capture<Active> {
 impl LivePacketSource {
     pub fn default() -> Self{
         let device = Device::lookup().unwrap().unwrap();
-        let mut capture = create_capture(device);
+        let capture = create_capture(device);
 
         LivePacketSource{
             capture
@@ -28,7 +28,7 @@ impl LivePacketSource {
     }
 
     pub fn from_dev(device: &Device) -> Self {
-        let mut capture = create_capture(device.clone());
+        let capture = create_capture(device.clone());
 
         LivePacketSource{
             capture

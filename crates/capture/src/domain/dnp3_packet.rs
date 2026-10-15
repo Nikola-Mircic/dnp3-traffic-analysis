@@ -27,18 +27,55 @@ pub struct Crob {
     pub status: u8,
 }
 
-/// Replaces Python's `value: Any`.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub enum PointValue {
     #[default]
     None, // object carries no data (e.g. a read request)
     Bool(bool),
     Int(i32),
-    UInt(u32),
     Float(f32),
-    //Time(DateTime<Utc>),
-    //Crob(Crob),
-    AnalogCommand { value: f32, status: u8 },
+    Crob(Crob)
+}
+
+pub enum OpType {
+    ///  not specified (value == 0)
+    Nul,
+    ///  pulse the output on (value == 1)
+    PulseOn,
+    ///  pulse the output off (value == 2)
+    PulseOff,
+    ///  latch the output on (value == 3)
+    LatchOn,
+    ///  latch the output off (value == 4)
+    LatchOff,
+    /// captures any value not defined in the enumeration
+    Unknown(u8),
+}
+
+impl OpType {
+    /// create the enum from the underlying value
+    pub fn from(x: u8) -> Self {
+        match x {
+            0 => OpType::Nul,
+            1 => OpType::PulseOn,
+            2 => OpType::PulseOff,
+            3 => OpType::LatchOn,
+            4 => OpType::LatchOff,
+            _ => OpType::Unknown(x),
+        }
+    }
+
+    /// convert the enum to its underlying value
+    pub fn as_str(&self) -> &str {
+        match self {
+            OpType::Nul => "Null",
+            OpType::PulseOn => "PulseOn",
+            OpType::PulseOff => "PulseOff",
+            OpType::LatchOn => "LatchOn",
+            OpType::LatchOff => "LatchOff",
+            OpType::Unknown(_) => "Unknown",
+        }
+    }
 }
 
 impl fmt::Display for PointValue {
@@ -47,15 +84,12 @@ impl fmt::Display for PointValue {
             Self::None => write!(f, "-"),
             Self::Bool(v) => write!(f, "{v}"),
             Self::Int(v) => write!(f, "{v}"),
-            Self::UInt(v) => write!(f, "{v}"),
             Self::Float(v) => write!(f, "{v}"),
-            //Self::Time(t) => write!(f, "{}", t.format("%Y-%m-%d %H:%M:%S%.3f")),
-            // Self::Crob(c) => write!(
-            //     f,
-            //     "CROB(code=0x{:02X}, count={}, on={}ms, off={}ms, status={})",
-            //     c.code, c.count, c.on_time_ms, c.off_time_ms, c.status
-            // ),
-            Self::AnalogCommand { value, status } => write!(f, "{value} (status {status})"),
+            Self::Crob(c) => write!(
+                f,
+                "{}, count={}, on={}ms, off={}ms, status={}",
+                OpType::from(c.code).as_str(), c.count, c.on_time_ms, c.off_time_ms, c.status
+            ),
         }
     }
 }

@@ -1,4 +1,3 @@
-use pcap::Packet;
 use crate::error::CaptureError;
 
 pub trait PacketSource: Iterator<Item = Vec<u8>> {

@@ -1,5 +1,6 @@
 pub enum PointType {
     Binary,
+    BinaryOutput,
     Counter,
     Analog
 }
@@ -53,6 +54,9 @@ impl PointFlags{
                 flags.rollover = bit(5);
                 flags.discontinuity = bit(6);
                 // bit 7 reserved
+            }
+            PointType::BinaryOutput => {
+                flags.state = bit(7);
             }
         }
 

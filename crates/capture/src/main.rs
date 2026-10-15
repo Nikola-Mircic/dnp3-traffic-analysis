@@ -26,7 +26,7 @@ fn select_device() -> Device {
 
     let mut selected = input.trim().parse::<usize>().unwrap_or(0);
 
-    if(selected >= devices.len()) {
+    if selected >= devices.len() {
         selected = 0;
     }
 

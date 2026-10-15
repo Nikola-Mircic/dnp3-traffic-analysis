@@ -112,7 +112,7 @@ fn parse_application_header(reader: &mut BufferReader, parse_iin: bool) -> Appli
 
     header.function_code = FunctionCode::from_u8(reader.u8());
 
-    if(parse_iin) {
+    if parse_iin {
         header.iin = Some(IinFlags::from_u16(reader.u16()));
     } else {
         header.iin = None;
