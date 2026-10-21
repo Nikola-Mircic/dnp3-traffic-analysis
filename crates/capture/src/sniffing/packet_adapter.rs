@@ -199,6 +199,12 @@ fn parse_objects(reader: &mut BufferReader) -> Vec<Dnp3Object> {
             continue;
         }
 
+        if object.group == 0 && object.variation == 254 {
+            objects.push(object);
+            continue;
+        }
+
+
         let point_info = PointLayout::from_gv(object.group, object.variation);
 
         match point_info {

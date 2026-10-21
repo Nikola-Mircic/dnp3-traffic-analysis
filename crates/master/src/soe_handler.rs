@@ -1,3 +1,4 @@
+use channel::dnp3::app::attr::AnyAttribute;
 use channel::dnp3::app::measurement::*;
 use channel::dnp3::master::{HeaderInfo, ReadHandler};
 
@@ -69,5 +70,9 @@ impl ReadHandler for SoeHandler {
         iter: &mut dyn Iterator<Item = (AnalogOutputStatus, u16)>,
     ) {
         print_points(&info, iter, |p| p.value.to_string());
+    }
+
+    fn handle_device_attribute(&mut self, info: HeaderInfo, attr: AnyAttribute) {
+        println!("Device attribute: {:?}", attr);
     }
 }

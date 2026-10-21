@@ -8,7 +8,8 @@ pub enum ValueType{
     Int16,
     Int32,
     Float32,
-    Crob
+    Crob,
+    Attribute
 }
 
 pub struct PointLayout {
@@ -62,6 +63,8 @@ impl PointLayout {
             (11, 2) => Ok(PointLayout::new(ValueType::State, PointType::BinaryOutput, true, true)),
             // Binary output command (CROB)
             (12, 1) => Ok(PointLayout::new(ValueType::Crob, PointType::BinaryOutput, false, false)),
+            // Device attributes
+            (0, 248) | (0, 250) | (0, 252) | (0, 254) => Ok(PointLayout::new(ValueType::Attribute, PointType::Analog, false, false)),
             _ => Err(CaptureError::FormatError(format!("Unsupported group and variation: {group}.{var}"))),
         }
     }
@@ -86,8 +89,8 @@ pub fn read_point(index: u32, point_info: &PointLayout, reader: &mut BufferReade
         ValueType::State => {
             PointValue::Bool(point.flags.clone()?.state)
         },
-        ValueType::Int16 => PointValue::Int(reader.u16() as i32),
-        ValueType::Int32 => PointValue::Int(reader.u32() as i32),
+        ValueType::Int16 => PointValue::Int(reader.u16() as i64),
+        ValueType::Int32 => PointValue::Int(reader.u32() as i64),
         ValueType::Float32 => PointValue::Float(f32::from_bits(reader.u32())),
         ValueType::Crob => PointValue::Crob(Crob {
             code: reader.u8(),
@@ -96,6 +99,7 @@ pub fn read_point(index: u32, point_info: &PointLayout, reader: &mut BufferReade
             off_time_ms: reader.u32(),
             status: reader.u8(),
         }),
+        ValueType::Attribute => read_attribute(reader),
     };
 
     if point_info.include_time {
@@ -103,4 +107,39 @@ pub fn read_point(index: u32, point_info: &PointLayout, reader: &mut BufferReade
     }
 
     Some(point)
+}
+
+fn read_attribute(reader: &mut BufferReader) -> PointValue {
+    let type_code = reader.u8();
+    let len = reader.u8() as usize;
+
+    decode_attribute(type_code, reader.read(len).to_vec())
+}
+
+fn decode_attribute(type_code: u8, data: Vec<u8>) -> PointValue {
+    const VSTR: u8 = 1;
+    const UINT: u8 = 2;
+    const INT: u8 = 3;
+    const FLT: u8 = 4;
+
+    match type_code {
+        VSTR => PointValue::String(
+            String::from_utf8_lossy(&data).trim_end_matches('\0').to_string(),
+        ),
+        UINT if (1..=8).contains(&data.len()) => {
+            let mut buf = [0u8; 8];
+            buf[..data.len()].copy_from_slice(&data);
+            PointValue::UInt(u64::from_le_bytes(buf))
+        }
+        INT if (1..=8).contains(&data.len()) => {
+            let fill = if data[data.len() - 1] & 0x80 != 0 { 0xFF } else { 0x00 };
+            let mut buf = [fill; 8];
+            buf[..data.len()].copy_from_slice(&data);
+            PointValue::Int(i64::from_le_bytes(buf))
+        }
+        FLT if data.len() == 4 => {
+            PointValue::Float(f32::from_le_bytes([data[0], data[1], data[2], data[3]]))
+        }
+        _ => PointValue::Bytes(data), // OSTR, BSTR, TIME, unknown types
+    }
 }

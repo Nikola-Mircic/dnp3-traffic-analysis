@@ -1,9 +1,9 @@
 use channel::dnp3::app::*;
 use channel::dnp3::outstation::*;
 
-pub struct SimApplication;
+pub struct SimulatorApplication;
 
-impl OutstationApplication for SimApplication {
+impl OutstationApplication for SimulatorApplication {
     // SupportsWriteAbsoluteTime() == True in the Python version
     fn write_absolute_time(&mut self, time: Timestamp) -> Result<(), RequestError> {
         tracing::info!("master wrote absolute time: {:?}", time);
@@ -24,6 +24,6 @@ impl OutstationApplication for SimApplication {
 }
 
 /// Python had no equivalent; the Rust API just requires one. All defaults.
-pub struct SimInformation;
+pub struct SimulatorInformation;
 
-impl OutstationInformation for SimInformation {}
+impl OutstationInformation for SimulatorInformation {}

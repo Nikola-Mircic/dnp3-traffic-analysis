@@ -32,9 +32,12 @@ pub enum PointValue {
     #[default]
     None, // object carries no data (e.g. a read request)
     Bool(bool),
-    Int(i32),
+    Int(i64),
+    UInt(u64),
     Float(f32),
-    Crob(Crob)
+    Crob(Crob),
+    String(String),
+    Bytes(Vec<u8>),
 }
 
 pub enum OpType {
@@ -84,12 +87,17 @@ impl fmt::Display for PointValue {
             Self::None => write!(f, "-"),
             Self::Bool(v) => write!(f, "{v}"),
             Self::Int(v) => write!(f, "{v}"),
+            Self::UInt(v) => write!(f, "{v}"),
             Self::Float(v) => write!(f, "{v}"),
             Self::Crob(c) => write!(
                 f,
                 "{}, count={}, on={}ms, off={}ms, status={}",
                 OpType::from(c.code).as_str(), c.count, c.on_time_ms, c.off_time_ms, c.status
             ),
+            Self::String(v) => write!(f, "{v}"),
+            Self::Bytes(v) => {
+                let length = v.len();
+                write!(f, "{length} bytes",) },
         }
     }
 }

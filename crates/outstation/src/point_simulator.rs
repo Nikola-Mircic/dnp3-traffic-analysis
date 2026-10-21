@@ -18,19 +18,17 @@ pub type FrozenCounterFn = SimulatorFn<FrozenCounter>;
 type BoxError = Box<dyn std::error::Error>;
 
 // ---------- CSV sources ----------
-
 fn load_column(path: &str, column: &str) -> Result<Vec<Option<f64>>, BoxError> {
     let mut reader = csv::Reader::from_path(path)?;
     let idx = reader
         .headers()?
         .iter()
         .position(|h| h.trim() == column)
-        .ok_or_else(|| format!("column '{column}' not found in {path}"))?;
+        .ok_or_else(|| format!("Column '{column}' not found in {path}"))?;
 
     let mut values = Vec::new();
     for record in reader.records() {
         let record = record?;
-        // empty / unparsable / NaN -> None (same as pd.isna in the Python version)
         let v = record
             .get(idx)
             .and_then(|s| s.trim().parse::<f64>().ok())

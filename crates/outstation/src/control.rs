@@ -7,7 +7,7 @@ use channel::dnp3::outstation::*;
 
 use crate::util::now;
 
-pub struct SimControlHandler {
+pub struct SimulatorControlHandler {
     binary_outputs: u16,
     analog_outputs: u16,
 }
@@ -19,7 +19,7 @@ enum CrobAction {
     Pulse(Duration),
 }
 
-impl SimControlHandler {
+impl SimulatorControlHandler {
     /// Number of configured binary / analog output points, used to reject out-of-range indices.
     pub fn new(binary_outputs: u16, analog_outputs: u16) -> Self {
         Self {
@@ -84,7 +84,7 @@ impl SimControlHandler {
 
 // ---------- CROB (group 12 var 1) ----------
 
-impl ControlSupport<Group12Var1> for SimControlHandler {
+impl ControlSupport<Group12Var1> for SimulatorControlHandler {
     // Select is a feasibility check only: nothing is actuated.
     fn select(
         &mut self,
@@ -146,7 +146,7 @@ impl ControlSupport<Group12Var1> for SimControlHandler {
 macro_rules! impl_analog_control {
     ($($ty:ty),+) => {
         $(
-            impl ControlSupport<$ty> for SimControlHandler {
+            impl ControlSupport<$ty> for SimulatorControlHandler {
                 fn select(
                     &mut self,
                     _control: $ty,
@@ -173,4 +173,4 @@ macro_rules! impl_analog_control {
 impl_analog_control!(Group41Var1, Group41Var2, Group41Var3, Group41Var4);
 
 // Marker trait: satisfied because all ControlSupport<T> impls exist above.
-impl ControlHandler for SimControlHandler {}
+impl ControlHandler for SimulatorControlHandler {}

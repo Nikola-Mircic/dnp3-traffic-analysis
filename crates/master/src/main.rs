@@ -4,6 +4,7 @@ mod soe_handler;
 use std::time::Duration;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use channel::client::ClientChannel;
+use channel::dnp3::app::attr::{AllAttributes, AttrSet};
 use channel::dnp3::app::control::{CommandStatus, ControlCode, Group12Var1, OpType};
 use channel::dnp3::link::EndpointAddress;
 use channel::dnp3::master::{Classes, CommandBuilder, CommandMode, CommandSupport, EventClasses, MasterChannelConfig, ReadRequest};
@@ -79,6 +80,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     CommandBuilder::single_header_u16(
                         get_crob_command(OpType::PulseOff),
                         0
+                    )
+                ).await?;
+            },
+            "read attr" => {
+                println!("Reading attributes...");
+                association.read(
+                    ReadRequest::device_attribute(
+                        AllAttributes,
+                        AttrSet::Default
                     )
                 ).await?;
             }

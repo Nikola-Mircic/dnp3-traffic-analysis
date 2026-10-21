@@ -1,11 +1,15 @@
+use channel::dnp3::app::attr::{AttrProp, StringAttr};
 use channel::dnp3::link::EndpointAddress;
 use channel::dnp3::outstation::database::*;
-use channel::dnp3::outstation::{Feature, OutstationConfig, OutstationHandle};
+use channel::dnp3::outstation::{Feature, OutstationApplication, OutstationConfig, OutstationHandle};
 
 /// Result of `OutstationConfigBuilder::build()`.
 pub struct OutstationSetup {
     /// Pass to `ServerChannel::add_outstation`.
     pub config: OutstationConfig,
+    pub name_and_model: String,
+    pub manufacturer: String,
+    pub serial: String,
     points: PointLayout,
 }
 
@@ -33,6 +37,21 @@ impl OutstationSetup {
             for (i, (class, cfg)) in p.analog_outputs.iter().enumerate() {
                 db.add(i as u16, *class, *cfg);
             }
+
+            db.define_attr(
+                AttrProp::default(),
+                StringAttr::DeviceManufacturersName.with_value(self.manufacturer.as_str())
+            ).expect("Failed to define device manufacturers name");
+
+            db.define_attr(
+                AttrProp::default(),
+                StringAttr::ProductNameAndModel.with_value(self.name_and_model.as_str())
+            ).expect("Failed to define device product name and model");
+
+            db.define_attr(
+                AttrProp::default(),
+                StringAttr::DeviceSerialNumber.with_value(self.serial.as_str())
+            ).expect("Failed to define device serial number");
         });
     }
 }
@@ -52,6 +71,9 @@ pub struct OutstationConfigBuilder {
     remote_addr: u16, // the master
     event_buffer_size: u16,
     allow_unsolicited: bool,
+    name_and_model: String,
+    manufacturer: String,
+    serial: String,
     points: PointLayout,
 }
 
@@ -63,6 +85,9 @@ impl Default for OutstationConfigBuilder {
             event_buffer_size: 10,
             allow_unsolicited: false,
             points: PointLayout::default(),
+            name_and_model: String::from("Outstation simulator"),
+            manufacturer: String::from("Nikola Mircic"),
+            serial: String::from("1652003NM")
         }
     }
 }
@@ -152,6 +177,21 @@ impl OutstationConfigBuilder {
         self
     }
 
+    pub fn set_name_and_model(&mut self, name: &str) -> &mut Self {
+        self.name_and_model = name.to_string();
+        self
+    }
+
+    pub fn set_manufacturer(&mut self, manufacturer: &str) -> &mut Self {
+        self.manufacturer = manufacturer.to_string();
+        self
+    }
+
+    pub fn set_serial(&mut self, serial: &str) -> &mut Self {
+        self.serial = serial.to_string();
+        self
+    }
+
     pub fn build(self) -> Result<OutstationSetup, String> {
         let local = EndpointAddress::try_new(self.local_addr).map_err(|e| e.to_string())?;
         let remote = EndpointAddress::try_new(self.remote_addr).map_err(|e| e.to_string())?;
@@ -169,6 +209,9 @@ impl OutstationConfigBuilder {
 
         Ok(OutstationSetup {
             config,
+            name_and_model: self.name_and_model,
+            manufacturer: self.manufacturer,
+            serial: self.serial,
             points: self.points,
         })
     }
