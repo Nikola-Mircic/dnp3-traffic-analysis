@@ -204,27 +204,22 @@ fn parse_objects(reader: &mut BufferReader) -> Vec<Dnp3Object> {
             continue;
         }
 
-
         let point_info = PointLayout::from_gv(object.group, object.variation);
 
-        match point_info {
-            Ok(info) => {
-                let points = parse_points(reader, &object, info);
-
-                match points {
-                    Ok(points) => object.points = points,
-                    Err(error) => {
-                        object.points = Vec::new();
-                        println!("{}", error);
-                        break;
-                    },
-                }
-            },
-            Err(error) => {
-                println!("{}", error);
-                break;
-            }
+        if point_info.is_err() {
+            println!("{}", point_info.err().unwrap());
+            break;
         }
+
+        let points = parse_points(reader, &object, point_info.unwrap());
+
+        if points.is_err() {
+            object.points = Vec::new();
+            println!("{}", points.err().unwrap());
+            break;
+        }
+
+        object.points = points.unwrap();
         objects.push(object);
     }
 
