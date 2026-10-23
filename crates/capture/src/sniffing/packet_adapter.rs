@@ -3,7 +3,7 @@ use crate::domain::enums::*;
 use crate::domain::packet_adapter::PacketAdapter;
 use crate::error::CaptureError;
 use crate::sniffing::buffer_reader::BufferReader;
-use crate::sniffing::parsers::point_reader::{read_point, PointLayout};
+use crate::sniffing::point_reader::{PointLayout, read_point};
 
 const DNP3_START_BYTES: [u8;2] = [0x05, 0x64];
 
