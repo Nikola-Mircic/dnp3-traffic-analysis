@@ -126,7 +126,7 @@ fn parse_points(reader: &mut BufferReader, object: &Dnp3Object) -> Result<Vec<Dn
 
     let point_reader = match reader_for(object.group, object.variation) {
         Ok(pr) => pr,
-        Err(_) => return Err(CaptureError::FormatError(format!("Could not read DNP3 group: {}.{}", object.group, object.variation))),
+        Err(e) => return Err(e),
     };
 
     match object.qualifier {
@@ -186,18 +186,7 @@ fn parse_objects(reader: &mut BufferReader) -> Vec<Dnp3Object> {
         object.group = reader.u8();
         object.variation = reader.u8();
 
-        let qualifier_val = reader.u8();
-
-        object.qualifier = match qualifier_val {
-            0x00 => Qualifier::StartStop8(reader.u8(), reader.u8()),
-            0x01 => Qualifier::StartStop16(reader.u16(), reader.u16()),
-            0x06 => Qualifier::AllObjects,
-            0x07 => Qualifier::Count8(reader.u8()),
-            0x08 => Qualifier::Count16(reader.u16()),
-            0x17 => Qualifier::CountWithIndex8(reader.u8()),
-            0x28 => Qualifier::CountWithIndex16(reader.u16()),
-            _ => Qualifier::Other(qualifier_val),
-        };
+        object.qualifier = Qualifier::from_reader(reader);
 
         if object.qualifier == Qualifier::AllObjects {
             objects.push(object);
