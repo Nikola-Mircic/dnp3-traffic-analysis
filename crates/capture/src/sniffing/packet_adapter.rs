@@ -3,7 +3,7 @@ use crate::domain::enums::*;
 use crate::domain::packet_adapter::PacketAdapter;
 use crate::error::CaptureError;
 use crate::sniffing::buffer_reader::BufferReader;
-use crate::sniffing::point_reader::{PointLayout, read_point};
+use crate::sniffing::point_reader::reader_for;
 
 const DNP3_START_BYTES: [u8;2] = [0x05, 0x64];
 
@@ -121,49 +121,54 @@ fn parse_application_header(reader: &mut BufferReader, parse_iin: bool) -> Appli
     header
 }
 
-fn parse_points(reader: &mut BufferReader, object: &Dnp3Object, info: PointLayout) -> Result<Vec<Dnp3Point>, CaptureError> {
+fn parse_points(reader: &mut BufferReader, object: &Dnp3Object) -> Result<Vec<Dnp3Point>, CaptureError> {
     let mut points = Vec::new();
+
+    let point_reader = match reader_for(object.group, object.variation) {
+        Ok(pr) => pr,
+        Err(_) => return Err(CaptureError::FormatError(format!("Could not read DNP3 group: {}.{}", object.group, object.variation))),
+    };
 
     match object.qualifier {
         Qualifier::StartStop8(start, stop) => {
             let (start_idx, stop_idx) = (start as u32, stop as u32);
             for i in start_idx..stop_idx+1 {
-                let point = read_point(i, &info, reader);
+                let point = point_reader.read_point(i, reader);
                 points.push(point.unwrap());
             }
         },
         Qualifier::StartStop16(start, stop) => {
             let (start_idx, stop_idx) = (start as u32, stop as u32);
             for i in start_idx..stop_idx+1 {
-                let point = read_point(i, &info, reader);
+                let point = point_reader.read_point(i, reader);
                 points.push(point.unwrap());
             }
         },
         Qualifier::Count8(count) => {
             let count_32 = count as u32;
             for i in 0..count_32 {
-                let point = read_point(i, &info, reader);
+                let point = point_reader.read_point(i, reader);
                 points.push(point.unwrap());
             }
         },
         Qualifier::Count16(count) => {
             let count_32 = count as u32;
             for i in 0..count_32 {
-                let point = read_point(i, &info, reader);
+                let point = point_reader.read_point(i, reader);
                 points.push(point.unwrap());
             }
         },
         Qualifier::CountWithIndex8(count) => {
             for i in 0..count {
                 let index = reader.u8() as u32;
-                let point = read_point(index, &info, reader);
+                let point = point_reader.read_point(index, reader);
                 points.push(point.unwrap());
             }
         },
         Qualifier::CountWithIndex16(count) => {
             for i in 0..count {
                 let index = reader.u16() as u32;
-                let point = read_point(index, &info, reader);
+                let point = point_reader.read_point(index, reader);
                 points.push(point.unwrap());
             }
         }
@@ -204,14 +209,7 @@ fn parse_objects(reader: &mut BufferReader) -> Vec<Dnp3Object> {
             continue;
         }
 
-        let point_info = PointLayout::from_gv(object.group, object.variation);
-
-        if point_info.is_err() {
-            println!("{}", point_info.err().unwrap());
-            break;
-        }
-
-        let points = parse_points(reader, &object, point_info.unwrap());
+        let points = parse_points(reader, &object);
 
         if points.is_err() {
             object.points = Vec::new();
