@@ -1,4 +1,4 @@
-use crate::domain::dnp3_packet::Dnp3Frame;
+use crate::domain::models::dnp3_packet::Dnp3Frame;
 use crate::error::CaptureError;
 
 pub trait PacketAdapter {

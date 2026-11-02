@@ -1,8 +1,8 @@
-use chrono::{DateTime, Utc};
-use crate::domain::dnp3_packet::{Crob, Dnp3Point, PointValue};
 use crate::domain::enums::{PointFlags, PointType};
+use crate::domain::models::dnp3_packet::{Crob, Dnp3Point, PointValue};
 use crate::error::CaptureError;
 use crate::sniffing::buffer_reader::BufferReader;
+use chrono::{DateTime, Utc};
 
 // The strategy interface.
 pub trait PointReader {

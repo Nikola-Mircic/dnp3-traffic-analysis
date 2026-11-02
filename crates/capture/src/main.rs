@@ -1,11 +1,11 @@
-use pcap::Device;
-use crate::domain::packet_adapter::PacketAdapter;
-use crate::domain::packet_processor::PacketProcessor;
-use crate::domain::packet_source::PacketSource;
 use crate::error::CaptureError;
 use crate::sniffing::console_processor::ConsoleProcessor;
 use crate::sniffing::live_packet_source::LivePacketSource;
 use crate::sniffing::packet_adapter::PcapPacketAdapter;
+use domain::models::packet_adapter::PacketAdapter;
+use domain::models::packet_processor::PacketProcessor;
+use domain::models::packet_source::PacketSource;
+use pcap::Device;
 
 mod domain;
 mod sniffing;

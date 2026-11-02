@@ -1,4 +1,4 @@
-use crate::domain::packet_source::PacketSource;
+use crate::domain::models::packet_source::PacketSource;
 use crate::error::CaptureError;
 use pcap::{Active, Capture, Device};
 

@@ -10,10 +10,6 @@ impl<'a> BufferReader<'a> {
         BufferReader { buf, pos: 0 }
     }
 
-    pub fn rest(&self) -> &'a[u8] {
-        &self.buf[self.pos..]
-    }
-
     pub fn remaining(&self) -> usize {
         self.buf.len() - self.pos
     }
@@ -26,13 +22,6 @@ impl<'a> BufferReader<'a> {
         let end_idx = self.pos + min(self.remaining(), n);
         let slice = &self.buf[self.pos..end_idx];
         self.pos = end_idx;
-        slice
-    }
-
-    // Get the next value without incrementing position pointer
-    pub fn peek(&mut self, n: usize) -> &[u8] {
-        let end_idx = self.pos + min(self.remaining(), n);
-        let slice = &self.buf[self.pos..end_idx];
         slice
     }
 
@@ -57,9 +46,5 @@ impl<'a> BufferReader<'a> {
         let mut padded = [0u8; 8];
         padded[..6].copy_from_slice(bytes);
         u64::from_le_bytes(padded)
-    }
-
-    fn u64(&mut self) -> u64 {
-        u64::from_le_bytes(self.read(8).try_into().unwrap())
     }
 }
