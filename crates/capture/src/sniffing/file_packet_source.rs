@@ -1,4 +1,4 @@
-use crate::domain::models::packet_source::PacketSource;
+use crate::domain::traits::packet_source::PacketSource;
 use crate::error::CaptureError;
 use pcap::{Capture, Offline};
 use std::path::Path;

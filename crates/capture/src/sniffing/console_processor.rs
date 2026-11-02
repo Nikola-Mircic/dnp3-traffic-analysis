@@ -1,5 +1,5 @@
 use crate::domain::models::dnp3_packet::Dnp3Frame;
-use crate::domain::models::packet_processor::PacketProcessor;
+use crate::domain::traits::packet_processor::PacketProcessor;
 
 pub struct ConsoleProcessor;
 
