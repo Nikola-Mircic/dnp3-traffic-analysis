@@ -27,19 +27,6 @@ pub struct Crob {
     pub status: u8,
 }
 
-#[derive(Debug, Clone, PartialEq, Default)]
-pub enum PointValue {
-    #[default]
-    None, // object carries no data (e.g. a read request)
-    Bool(bool),
-    Int(i64),
-    UInt(u64),
-    Float(f32),
-    Crob(Crob),
-    String(String),
-    Bytes(Vec<u8>),
-}
-
 pub enum OpType {
     ///  not specified (value == 0)
     Nul,
@@ -72,13 +59,26 @@ impl OpType {
     pub fn as_str(&self) -> &str {
         match self {
             OpType::Nul => "Null",
-            OpType::PulseOn => "PulseOn",
-            OpType::PulseOff => "PulseOff",
-            OpType::LatchOn => "LatchOn",
-            OpType::LatchOff => "LatchOff",
+            OpType::PulseOn => "Pulse On",
+            OpType::PulseOff => "Pulse Off",
+            OpType::LatchOn => "Latch On",
+            OpType::LatchOff => "Latch Off",
             OpType::Unknown(_) => "Unknown",
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub enum PointValue {
+    #[default]
+    None, // object carries no data (e.g. a read request)
+    Bool(bool),
+    Int(i64),
+    UInt(u64),
+    Float(f32),
+    Crob(Crob),
+    String(String),
+    Bytes(Vec<u8>),
 }
 
 impl fmt::Display for PointValue {

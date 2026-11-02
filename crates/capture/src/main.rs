@@ -10,6 +10,7 @@ use crate::sniffing::packet_adapter::PcapPacketAdapter;
 mod domain;
 mod sniffing;
 pub mod error;
+mod util;
 
 fn select_device() -> Device {
     let devices = Device::list().unwrap();
