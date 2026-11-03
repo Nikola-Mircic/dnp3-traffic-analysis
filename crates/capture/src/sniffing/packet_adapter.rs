@@ -1,6 +1,6 @@
-use crate::domain::dnp3_packet::*;
 use crate::domain::enums::*;
-use crate::domain::packet_adapter::PacketAdapter;
+use crate::domain::models::dnp3_packet::*;
+use crate::domain::traits::packet_adapter::PacketAdapter;
 use crate::error::CaptureError;
 use crate::sniffing::buffer_reader::BufferReader;
 use crate::sniffing::point_reader::reader_for;

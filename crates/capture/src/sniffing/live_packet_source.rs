@@ -1,9 +1,10 @@
-use crate::domain::packet_source::PacketSource;
+use crate::domain::traits::packet_source::PacketSource;
 use crate::error::CaptureError;
-use pcap::{Active, Capture, Device};
+use pcap::{Active, Capture, Device, Savefile};
 
 pub struct LivePacketSource {
     capture: Capture<Active>,
+    safefile: Option<Savefile>,
 }
 
 fn create_capture(device: Device) -> Capture<Active> {
@@ -23,7 +24,8 @@ impl LivePacketSource {
         let capture = create_capture(device);
 
         LivePacketSource{
-            capture
+            capture,
+            safefile: None,
         }
     }
 
@@ -31,8 +33,13 @@ impl LivePacketSource {
         let capture = create_capture(device.clone());
 
         LivePacketSource{
-            capture
+            capture,
+            safefile: None,
         }
+    }
+
+    pub fn use_savefile(&mut self, path: &str) {
+        self.safefile = Some(self.capture.savefile(path).unwrap())
     }
 }
 
@@ -41,7 +48,12 @@ impl PacketSource for LivePacketSource {
         let packet = self.capture.next_packet();
 
         match packet {
-            Ok(packet) => Ok(packet.data),
+            Ok(packet) => {
+                if self.safefile.is_some() {
+                    self.safefile.as_mut().unwrap().write(&packet);
+                }
+                Ok(packet.data)
+            },
             Err(e) => Err(CaptureError::PcapError(e))
         }
     }

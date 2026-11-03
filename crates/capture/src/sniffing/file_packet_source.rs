@@ -1,7 +1,7 @@
-use std::path::Path;
-use pcap::{Capture, Offline};
-use crate::domain::packet_source::PacketSource;
+use crate::domain::traits::packet_source::PacketSource;
 use crate::error::CaptureError;
+use pcap::{Capture, Offline};
+use std::path::Path;
 
 pub struct FilePacketSource{
     capture: Capture<Offline>,

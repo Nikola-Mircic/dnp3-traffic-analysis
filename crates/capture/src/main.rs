@@ -1,11 +1,13 @@
-use pcap::Device;
-use crate::domain::packet_adapter::PacketAdapter;
-use crate::domain::packet_processor::PacketProcessor;
-use crate::domain::packet_source::PacketSource;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use crate::error::CaptureError;
 use crate::sniffing::console_processor::ConsoleProcessor;
 use crate::sniffing::live_packet_source::LivePacketSource;
 use crate::sniffing::packet_adapter::PcapPacketAdapter;
+use domain::traits::packet_adapter::PacketAdapter;
+use domain::traits::packet_processor::PacketProcessor;
+use domain::traits::packet_source::PacketSource;
+use pcap::Device;
 
 mod domain;
 mod sniffing;
@@ -34,10 +36,14 @@ fn select_device() -> Device {
     devices.get(selected).unwrap().clone()
 }
 
-fn process_packets<S, P>(source: &mut S, processor: &P)
+fn process_packets<S, P>(source: &mut S, processor: &P, running: &Arc<AtomicBool>)
 where S: PacketSource, P: PacketProcessor {
     let adapter = PcapPacketAdapter{};
     for packet in source {
+        if !running.load(Ordering::SeqCst) {
+            break;
+        }
+
         let frame = adapter.adapt(packet.as_slice());
         match frame {
             Ok(frame) => {
@@ -50,15 +56,28 @@ where S: PacketSource, P: PacketProcessor {
 }
 
 fn main() {
+    let running = Arc::new(AtomicBool::new(true));
+    {
+        let running = running.clone();
+        ctrlc::set_handler(move || {
+            running.store(false, Ordering::SeqCst);
+        })
+            .expect("failed to set Ctrl+C handler");
+    }
+
     let device = select_device();
     let name = device.desc.clone().unwrap();
 
     println!("Using device: {:?}", name);
 
     let mut source = LivePacketSource::from_dev(&device);
+
+    source.use_savefile("dump.pcap");
     //let mut source = FilePacketSource::new("./crates/capture/dnp3.pcap");
 
     let processor = ConsoleProcessor;
 
-    process_packets(&mut source, &processor);
+    process_packets(&mut source, &processor, &running);
+
+    println!("Done");
 }
