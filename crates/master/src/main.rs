@@ -15,18 +15,6 @@ use soe_handler::SoeHandler;
 use crate::cli::ctx::Ctx;
 use crate::cli::logger::Logger;
 
-/// Funkcija koja vraca CROB komandu na osnovu tipa operacije ( uvek koristim on i off time na
-/// 5 sekundi zbog jednostavnosti )
-fn get_crob_command(op_type: OpType) -> Group12Var1 {
-    Group12Var1 {
-        code: ControlCode::from_op_type(op_type),
-        count: 1,
-        on_time: 5000,
-        off_time: 5000,
-        status: CommandStatus::Success,
-    }
-}
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenvy::dotenv().ok();
@@ -45,7 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         MasterChannelConfig::new(EndpointAddress::try_new(2)?),
     );
 
-    let mut association = client
+    let association = client
         .add_master(
             EndpointAddress::try_new(1)?,
             association_config(),

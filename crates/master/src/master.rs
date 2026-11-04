@@ -14,9 +14,9 @@ impl AssociationInformation for NoopAssociationInformation {}
 pub fn association_config() -> AssociationConfig {
     let mut config = AssociationConfig::new(
         EventClasses::none(), // disable unsolicited on startup: none
-        EventClasses::all(), // enable unsolicited on startup: none (outstation has it off)
+        EventClasses::all(),  // enable unsolicited on startup: all
         Classes::all(),       // startup integrity scan (the opendnp3 default)
-        EventClasses::all(), // no event scan when "events available" IIN is set
+        EventClasses::none(), // no event scan when "events available" IIN is set
     );
     config.auto_integrity_scan_on_buffer_overflow = false;
     config

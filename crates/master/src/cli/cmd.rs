@@ -36,6 +36,7 @@ pub enum Cmd {
         #[arg(long, default_value_t = 5000)]
         off_ms: u32,
     },
+    #[command(allow_negative_numbers = true)]
     AnalogOut {
         value: f64,
         #[arg(short = 'i', long)]
