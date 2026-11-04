@@ -1,5 +1,6 @@
 mod master;
 mod soe_handler;
+mod cli;
 
 use std::time::Duration;
 use tokio::io::{AsyncBufReadExt, BufReader};
@@ -11,6 +12,8 @@ use channel::dnp3::master::{Classes, CommandBuilder, CommandMode, CommandSupport
 
 use master::{association_config, NoopAssociationHandler, NoopAssociationInformation};
 use soe_handler::SoeHandler;
+use crate::cli::ctx::Ctx;
+use crate::cli::logger::Logger;
 
 /// Funkcija koja vraca CROB komandu na osnovu tipa operacije ( uvek koristim on i off time na
 /// 5 sekundi zbog jednostavnosti )
@@ -53,49 +56,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
 
     // class scan of all event classes every 10 seconds
-    let _poll = association
+    /*let _poll = association
         .add_poll(ReadRequest::ClassScan(Classes::new(false, EventClasses::all())), Duration::from_secs(10))
-        .await?;
+        .await?;*/
 
     client.enable().await?;
+    println!("Initialization complete");
+
+    let log_path = std::env::var("LOG_FILE").unwrap_or_else(|_| "master.log".into());
+    let mut ctx = Ctx::new(association, Logger::open(&log_path)?);
     println!("Initialization complete. Polling data.");
 
     let mut lines = BufReader::new(tokio::io::stdin()).lines();
     while let Some(line) = lines.next_line().await? {
-        match line.trim() {
-            "exit" => break,
-            "pulse on" => {
-                println!("Executing pulse on command...");
-                association.operate(
-                    CommandMode::DirectOperate,
-                    CommandBuilder::single_header_u16(
-                        get_crob_command(OpType::PulseOn),
-                        0
-                    )).await?;
-            },
-            "pulse off" => {
-                println!("Executing pulse off command...");
-                association.operate(
-                    CommandMode::DirectOperate,
-                    CommandBuilder::single_header_u16(
-                        get_crob_command(OpType::PulseOff),
-                        0
-                    )
-                ).await?;
-            },
-            "read attr" => {
-                println!("Reading attributes...");
-                association.read(
-                    ReadRequest::device_attribute(
-                        AllAttributes,
-                        AttrSet::Default
-                    )
-                ).await?;
-            }
-            _ => {}
+        if !ctx.exec_line(&line).await {
+            break;
         }
     }
-
     println!("Exiting...");
-    Ok(()) // dropping `client` shuts the channel down
+    Ok(())
 }
