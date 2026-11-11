@@ -1,12 +1,30 @@
 use channel::dnp3::app::*;
 use channel::dnp3::outstation::*;
 
-pub struct SimulatorApplication;
+use std::sync::{Arc, Mutex};
+
+/// Application IIN bits, shared with the CLI (`iin set|clear`).
+pub type SharedIin = Arc<Mutex<ApplicationIin>>;
+
+pub struct SimulatorApplication {
+    iin: SharedIin,
+}
+
+impl SimulatorApplication {
+    pub fn new(iin: SharedIin) -> Self {
+        Self { iin }
+    }
+}
 
 impl OutstationApplication for SimulatorApplication {
+    fn get_application_iin(&self) -> ApplicationIin {
+        *self.iin.lock().unwrap()
+    }
+
     // SupportsWriteAbsoluteTime() == True in the Python version
     fn write_absolute_time(&mut self, time: Timestamp) -> Result<(), RequestError> {
         tracing::info!("master wrote absolute time: {:?}", time);
+        self.iin.lock().unwrap().need_time = false; // a time write satisfies NEED_TIME
         Ok(())
     }
 

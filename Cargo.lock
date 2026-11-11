@@ -808,8 +808,11 @@ name = "outstation"
 version = "0.1.0"
 dependencies = [
  "channel",
+ "chrono",
+ "clap",
  "csv",
  "dotenvy",
+ "shlex",
  "tokio",
  "tracing",
  "tracing-subscriber",

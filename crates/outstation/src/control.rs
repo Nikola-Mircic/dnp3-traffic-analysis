@@ -1,3 +1,4 @@
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use channel::dnp3::app::control::*;
@@ -7,9 +8,13 @@ use channel::dnp3::outstation::*;
 
 use crate::util::now;
 
+/// Status the next select/operate returns instead of running (`fail-next`), shared with the CLI.
+pub type FailNext = Arc<Mutex<Option<CommandStatus>>>;
+
 pub struct SimulatorControlHandler {
     binary_outputs: u16,
     analog_outputs: u16,
+    fail_next: FailNext,
 }
 
 enum CrobAction {
@@ -21,11 +26,17 @@ enum CrobAction {
 
 impl SimulatorControlHandler {
     /// Number of configured binary / analog output points, used to reject out-of-range indices.
-    pub fn new(binary_outputs: u16, analog_outputs: u16) -> Self {
+    pub fn new(binary_outputs: u16, analog_outputs: u16, fail_next: FailNext) -> Self {
         Self {
             binary_outputs,
             analog_outputs,
+            fail_next,
         }
+    }
+
+    /// Takes the armed failure, if any. Whichever select/operate runs first consumes it.
+    fn injected(&self) -> Option<CommandStatus> {
+        self.fail_next.lock().unwrap().take()
     }
 
     fn classify(control: &Group12Var1) -> Option<CrobAction> {
@@ -54,6 +65,9 @@ impl SimulatorControlHandler {
     }
 
     fn select_analog(&self, index: u16) -> CommandStatus {
+        if let Some(status) = self.injected() {
+            return status;
+        }
         if index < self.analog_outputs {
             CommandStatus::Success
         } else {
@@ -67,6 +81,9 @@ impl SimulatorControlHandler {
         index: u16,
         value: f64,
     ) -> CommandStatus {
+        if let Some(status) = self.injected() {
+            return status;
+        }
         if index >= self.analog_outputs {
             return CommandStatus::OutOfRange;
         }
@@ -92,6 +109,9 @@ impl ControlSupport<Group12Var1> for SimulatorControlHandler {
         index: u16,
         _database: &mut DatabaseHandle,
     ) -> CommandStatus {
+        if let Some(status) = self.injected() {
+            return status;
+        }
         if index >= self.binary_outputs {
             return CommandStatus::OutOfRange;
         }
@@ -108,6 +128,9 @@ impl ControlSupport<Group12Var1> for SimulatorControlHandler {
         _op_type: OperateType,
         database: &mut DatabaseHandle,
     ) -> CommandStatus {
+        if let Some(status) = self.injected() {
+            return status;
+        }
         if index >= self.binary_outputs {
             return CommandStatus::OutOfRange;
         }
