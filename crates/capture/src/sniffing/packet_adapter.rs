@@ -171,6 +171,12 @@ impl PacketAdapter for PcapPacketAdapter {
         frame.transport = parse_transport_header(&mut reader);
         frame.application = parse_application_header(&mut reader, !frame.data_link.control.dir);
 
+        let source = if frame.data_link.control.dir { "Master" } else { "Outstation" };
+
+        let message = format!("{:?} from {}", frame.application.function_code, source);
+
+        println!("{}", message);
+
         frame.objects = parse_objects(&mut reader);
 
         Ok(frame)

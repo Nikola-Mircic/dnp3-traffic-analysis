@@ -1,3 +1,4 @@
+use std::env;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use crate::error::CaptureError;
@@ -56,6 +57,8 @@ where S: PacketSource, P: PacketProcessor {
 }
 
 fn main() {
+    unsafe { env::set_var("RUST_BACKTRACE", "1"); }
+
     let running = Arc::new(AtomicBool::new(true));
     {
         let running = running.clone();
